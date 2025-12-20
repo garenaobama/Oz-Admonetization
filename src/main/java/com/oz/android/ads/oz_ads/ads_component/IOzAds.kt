@@ -25,7 +25,8 @@ interface IOzAds {
 
     /**
      * Hiển thị quảng cáo
+     * @param key Key để identify ad cần show (đại diện cho placement)
      */
-    fun showAds()
+    fun showAds(key: String)
 }
 

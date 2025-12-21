@@ -1,9 +1,10 @@
 package com.oz.android.ads.oz_ads.ads_component.ads_inline.admob
 
+import AdmobBanner
 import android.content.Context
-import android.util.AttributeSet
 import android.util.Log
-import com.oz.android.ads.network.admobs.ads_component.banner.AdmobBanner
+import com.google.android.gms.ads.LoadAdError
+import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
 import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.ads_inline.InlineAds
 import java.util.concurrent.ConcurrentHashMap
@@ -14,9 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class OzAdmobBannerAd @JvmOverloads constructor(
     context: Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
-) : InlineAds<AdmobBanner>(context, attrs, defStyleAttr) {
+) : InlineAds<AdmobBanner>(context) {
 
     companion object {
         private const val TAG = "OzAdmobBannerAd"
@@ -54,23 +53,15 @@ class OzAdmobBannerAd @JvmOverloads constructor(
             return null
         }
 
-        val listener = object : AdmobBannerListener {
+        val listener = object : OzAdmobListener<AdmobBanner>() {
             override fun onAdLoaded(ad: AdmobBanner) {
                 // Pass the loaded ad object to the parent
                 this@OzAdmobBannerAd.onAdLoaded(key, ad)
             }
 
-            override fun onAdFailedToLoad(error: com.google.android.gms.ads.LoadAdError) {
+            override fun onAdFailedToLoad(error: LoadAdError) {
                 // Notify parent about the failure
                 this@OzAdmobBannerAd.onAdLoadFailed(key, error.message)
-            }
-
-            override fun onAdClicked() {
-                // Can be used for analytics in the future
-            }
-
-            override fun onAdImpression() {
-                // Can be used for analytics in the future
             }
         }
 
@@ -95,7 +86,7 @@ class OzAdmobBannerAd @JvmOverloads constructor(
         removeAllViews()
         Log.d(TAG, "Banner ads hidden")
     }
-    
+
     override fun destroyAd(ad: AdmobBanner) {
         Log.d(TAG, "Destroying banner ad")
         ad.destroy()

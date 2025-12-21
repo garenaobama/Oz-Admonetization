@@ -3,48 +3,46 @@ package com.oz.android.ads.oz_ads.ads_component.ads_inline
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import com.oz.android.ads.oz_ads.ads_component.AdState
 import com.oz.android.ads.oz_ads.ads_component.AdsFormat
-import com.oz.android.ads.oz_ads.ads_component.IOzAds
 import com.oz.android.ads.oz_ads.ads_component.OzAds
 
 /**
  * Abstract class để quản lý inline ads (banner, native) hiển thị cùng với content
  * InlineAds là một ViewGroup có thể được thêm vào layout như một child view
- * 
+ *
  * Hỗ trợ nhiều ad network (AdMob, Max, Meta...) nhưng hiện tại tối ưu cho AdMob
- * 
+ *
  * InlineAds chỉ hỗ trợ format: BANNER, NATIVE
  * Refresh time chỉ có trong inline format
- * 
+ *
  * Các implementation cụ thể sẽ extend class này và implement các abstract methods
  */
 abstract class InlineAds<AdType> @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
-) : OzAds<AdType>() {
+    context: Context
+) : OzAds<AdType>(context) {
+    /**
+     * Abstract method để các implementation xử lý pause ad
+     */
+    protected abstract fun onPauseAd()
+
+    /**
+     * Abstract method để các implementation xử lý resume ad
+     */
+    protected abstract fun onResumeAd()
 
     companion object {
         private const val TAG = "InlineAds"
-        
+
         // Default refresh times (in milliseconds)
         private const val DEFAULT_REFRESH_TIME = 30_000L // 30 seconds
-        private const val DEFAULT_MAX_REFRESH_TIME = 300_000L // 5 minutes
     }
 
     // Refresh time management
     private var refreshTime: Long = DEFAULT_REFRESH_TIME
-    private var maxRefreshTime: Long = DEFAULT_MAX_REFRESH_TIME
-    private var lastRefreshTime: Long = 0
-    private var totalRefreshTime: Long = 0
 
     // Auto refresh handler
     private val refreshHandler = Handler(Looper.getMainLooper())
@@ -67,7 +65,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     override fun shouldShowAd(): Boolean {
         return super.shouldShowAd() && isAdVisible
     }
-    
+
     override fun setPreloadKey(key: String) {
         this.preloadKey = key
         super.setPreloadKey(key)
@@ -95,29 +93,11 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     }
 
     /**
-     * Set thời gian tối đa để refresh ad (milliseconds)
-     * @param timeInMillis Thời gian tối đa tính bằng milliseconds
-     */
-    fun setMaxRefreshTime(timeInMillis: Long) {
-        if (timeInMillis <= 0) {
-            Log.w(TAG, "Max refresh time must be greater than 0")
-            return
-        }
-        maxRefreshTime = timeInMillis
-    }
-
-    /**
      * Get thời gian refresh hiện tại
      * @return Thời gian refresh tính bằng milliseconds
      */
     fun getRefreshTime(): Long = refreshTime
 
-    /**
-     * Get thời gian tối đa refresh
-     * @return Thời gian tối đa tính bằng milliseconds
-     */
-    fun getMaxRefreshTime(): Long = maxRefreshTime
-    
     /**
      * Called khi ad được load thành công
      * Các implementation nên gọi method này sau khi load ad thành công
@@ -126,13 +106,8 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      */
     override fun onAdLoaded(key: String, ad: AdType) {
         super.onAdLoaded(key, ad)
-        
-        // Update refresh time tracking
-        lastRefreshTime = System.currentTimeMillis()
-        totalRefreshTime = 0
-        
-        // Start auto refresh if conditions are met
-        if (totalRefreshTime < maxRefreshTime && isAdVisible) {
+
+        if (isAdVisible) {
             scheduleNextRefresh()
         }
     }
@@ -145,25 +120,24 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      */
     override fun onAdLoadFailed(key: String, message: String?) {
         super.onAdLoadFailed(key, message)
-        
-        // Retry after a delay
-        if (totalRefreshTime < maxRefreshTime && isAdVisible) {
+
+        if (isAdVisible) {
             scheduleNextRefresh()
         }
     }
-    
+
     /**
      * Schedule refresh ad sau một khoảng thời gian
      */
     private fun scheduleNextRefresh() {
         cancelAutoRefresh()
-        
+
         refreshRunnable = Runnable {
-            if (totalRefreshTime < maxRefreshTime && isAdVisible) {
+            if (isAdVisible) {
                 refreshAd()
             }
         }
-        
+
         refreshHandler.postDelayed(refreshRunnable!!, refreshTime)
     }
 
@@ -171,18 +145,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      * Refresh ad (load lại ad mới)
      */
     fun refreshAd() {
-        val currentTime = System.currentTimeMillis()
-        val elapsedTime = currentTime - lastRefreshTime
-        totalRefreshTime += elapsedTime
-        lastRefreshTime = currentTime
-
-        if (totalRefreshTime >= maxRefreshTime) {
-            Log.d(TAG, "Max refresh time reached, stopping auto refresh")
-            cancelAutoRefresh()
-            return
-        }
-
-        Log.d(TAG, "Refreshing ad... (total time: ${totalRefreshTime}ms, max: ${maxRefreshTime}ms)")
+        Log.d(TAG, "Refreshing ad...")
         preloadKey?.let { key ->
             onDestroyAd(key)
             loadAd(key)
@@ -209,7 +172,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
             refreshRunnable = null
         }
     }
-    
+
     /**
      * Pause ad (gọi trong onPause của Activity/Fragment)
      */
@@ -231,9 +194,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
                 } else {
                     loadAd(key)
                 }
-                if (totalRefreshTime < maxRefreshTime) {
-                    scheduleNextRefresh()
-                }
+                scheduleNextRefresh()
             }
         }
         onResumeAd()
@@ -269,7 +230,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         val newVisibility = visibility == VISIBLE
         if (isAdVisible == newVisibility) return
         isAdVisible = newVisibility
-        
+
         if (isAdVisible) {
             resume()
         } else {
@@ -287,23 +248,13 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     }
 
     /**
-     * Abstract method để các implementation xử lý pause ad
-     */
-    protected abstract fun onPauseAd()
-
-    /**
-     * Abstract method để các implementation xử lý resume ad
-     */
-    protected abstract fun onResumeAd()
-
-    /**
      * Default layout params cho InlineAds
      */
     override fun generateDefaultLayoutParams(): LayoutParams {
         return LayoutParams(MATCH_PARENT, WRAP_CONTENT)
     }
 
-    override fun generateLayoutParams(attrs: AttributeSet?): LayoutParams {
+    override fun generateLayoutParams(attrs: android.util.AttributeSet?): LayoutParams {
         return LayoutParams(context, attrs)
     }
 

@@ -8,16 +8,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.oz.android.ads.network.admobs.ads_component.IAdmobAds
-
-/**
- * Listener for Admob Banner ad events.
- */
-interface AdmobBannerListener {
-    fun onAdLoaded(ad: AdmobBanner)
-    fun onAdFailedToLoad(error: LoadAdError)
-    fun onAdClicked()
-    fun onAdImpression()
-}
+import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
 
 /**
  * Class quản lý banner ads từ AdMob
@@ -26,7 +17,7 @@ interface AdmobBannerListener {
 class AdmobBanner(
     private val context: Context,
     private val adUnitId: String,
-    private val listener: AdmobBannerListener? = null
+    private val listener: OzAdmobListener<AdmobBanner>? = null
 ) : IAdmobAds {
     private var adView: AdView? = null
     private var isLoaded = false

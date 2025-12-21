@@ -1,6 +1,8 @@
 package com.oz.android.ads.oz_ads
 
+import AdmobBanner
 import android.app.Activity
+import com.google.android.gms.ads.LoadAdError
 import com.oz.android.ads.network.admobs.AdMobManager
 import com.oz.android.ads.network.admobs.AdMobResult
 import com.oz.android.ads.network.admobs.IAdMobManager

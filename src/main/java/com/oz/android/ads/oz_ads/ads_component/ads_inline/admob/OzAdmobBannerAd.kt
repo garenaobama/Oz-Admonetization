@@ -17,12 +17,11 @@ class OzAdmobBannerAd @JvmOverloads constructor(
     context: Context,
 ) : InlineAds<AdmobBanner>(context) {
 
+    private var banner:AdmobBanner? = null
+
     companion object {
         private const val TAG = "OzAdmobBannerAd"
     }
-
-    // Map key -> adUnitId
-    private val adUnitIds = ConcurrentHashMap<String, String>()
 
     init {
         // Set format to BANNER by default for this specific class
@@ -35,7 +34,8 @@ class OzAdmobBannerAd @JvmOverloads constructor(
      * @param adUnitId Ad unit ID từ AdMob
      */
     fun setAdUnitId(key: String, adUnitId: String) {
-        adUnitIds[key] = adUnitId
+        (adStore[key] as AdmobBanner).adUnitId = adUnitId
+        setPreloadKey(key)
         Log.d(TAG, "Ad unit ID set for key: $key -> $adUnitId")
     }
 
@@ -44,11 +44,11 @@ class OzAdmobBannerAd @JvmOverloads constructor(
      * @param key Key để identify placement
      * @return Ad unit ID, null nếu chưa được set
      */
-    fun getAdUnitId(key: String): String? = adUnitIds[key]
+    fun getAdUnitId(key: String): String? = banner?.adUnitId
 
     override fun createAd(key: String): AdmobBanner? {
-        val adUnitId = adUnitIds[key]
-        if (adUnitId == null) {
+        val adUnitId = (adStore[key] as AdmobBanner).adUnitId
+        if (adUnitId.isBlank()) {
             Log.e(TAG, "Ad unit ID not set for key: $key")
             return null
         }
@@ -64,6 +64,8 @@ class OzAdmobBannerAd @JvmOverloads constructor(
                 this@OzAdmobBannerAd.onAdLoadFailed(key, error.message)
             }
         }
+
+        banner = AdmobBanner(context, adUnitId, listener)
 
         return AdmobBanner(context, adUnitId, listener)
     }

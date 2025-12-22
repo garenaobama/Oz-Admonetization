@@ -3,6 +3,10 @@ package com.oz.android.ads.oz_ads.ads_component
 import android.content.Context
 import android.util.Log
 import android.view.ViewGroup
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import com.oz.android.ads.oz_ads.OzAdsManager
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -25,10 +29,6 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     protected var adsFormat: AdsFormat? = null
         private set
 
-    // Should show ad flag
-    protected var shouldShow: Boolean = true
-        private set
-
     // Preloaded ads state management (key -> state)
     private val adStates = ConcurrentHashMap<String, AdState>()
 
@@ -40,6 +40,17 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
 
     // Current showing key
     private var currentShowingKey: String? = null
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+            OzAdsManager.getInstance().shouldShowAds.collect { shouldShow ->
+                if (!shouldShow) {
+                    hideAds()
+                }
+            }
+        }
+    }
 
     /**
      * Set ads format
@@ -79,20 +90,7 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
      * @return true nếu nên hiển thị, false nếu không
      */
     override fun shouldShowAd(): Boolean {
-        return shouldShow
-    }
-
-    /**
-     * Set trạng thái có nên hiển thị ad hay không
-     * @param shouldShow true để hiển thị, false để ẩn
-     */
-    fun setShouldShowAd(shouldShow: Boolean) {
-        this.shouldShow = shouldShow
-        if (!shouldShow) {
-            hideAds()
-        }
-        // Note: Showing ads when shouldShow becomes true should be handled by implementation
-        // as it requires a key parameter
+        return OzAdsManager.getInstance().shouldShowAds.value
     }
 
     /**
@@ -109,9 +107,9 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
         // Set state to IDLE nếu chưa có
         adStates.putIfAbsent(key, AdState.IDLE)
 
-        // Preload ad
-        loadAd(key)
-        Log.d(TAG, "Preload key set to: $key")
+//        // Preload ad
+//        loadAd(key)
+//        Log.d(TAG, "Preload key set to: $key")
     }
 
     /**

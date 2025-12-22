@@ -1,4 +1,3 @@
-
 import android.content.Context
 import android.util.Log
 import android.view.ViewGroup
@@ -7,6 +6,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
+import com.oz.android.ads.network.admobs.ads_component.AdmobBase
 import com.oz.android.ads.network.admobs.ads_component.IAdmobAds
 import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
 
@@ -15,10 +15,14 @@ import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
  * Cung cấp 3 phương thức chính: load, show, và loadThenShow
  */
 class AdmobBanner(
-    private val context: Context,
-    private val adUnitId: String,
-    private val listener: OzAdmobListener<AdmobBanner>? = null
-) : IAdmobAds {
+    context: Context,
+    adUnitId: String,
+    listener: OzAdmobListener<AdmobBanner>?
+) : IAdmobAds, AdmobBase<AdmobBanner>(
+    context,
+    adUnitId,
+    listener
+) {
     private var adView: AdView? = null
     private var isLoaded = false
     private var pendingContainer: ViewGroup? = null
@@ -42,13 +46,13 @@ class AdmobBanner(
             adView = AdView(context).apply {
                 this.adUnitId = this@AdmobBanner.adUnitId
                 setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, 360))
-                
+
                 adListener = object : AdListener() {
                     override fun onAdLoaded() {
                         isLoaded = true
                         Log.d(TAG, "Banner ad loaded successfully")
                         listener?.onAdLoaded(this@AdmobBanner)
-                        
+
                         // Nếu có container đang chờ, tự động hiển thị
                         pendingContainer?.let { container ->
                             show(container)
@@ -114,7 +118,7 @@ class AdmobBanner(
 
         // Xóa các view cũ trong container
         container.removeAllViews()
-        
+
         // Thêm AdView vào container
         container.addView(currentAdView)
         Log.d(TAG, "Banner ad displayed in container")
@@ -125,7 +129,10 @@ class AdmobBanner(
      * Lưu ý: Banner cần container, sử dụng loadThenShow(container: ViewGroup) thay vì method này
      */
     override fun loadThenShow() {
-        Log.w(TAG, "loadThenShow() called without container. Use loadThenShow(container: ViewGroup) for banner ads")
+        Log.w(
+            TAG,
+            "loadThenShow() called without container. Use loadThenShow(container: ViewGroup) for banner ads"
+        )
     }
 
     /**

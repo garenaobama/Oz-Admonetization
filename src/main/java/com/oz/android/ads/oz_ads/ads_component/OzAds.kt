@@ -29,17 +29,11 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     protected var adsFormat: AdsFormat? = null
         private set
 
-    // Preloaded ads state management (key -> state)
-    private val adStates = ConcurrentHashMap<String, AdState>()
-
-    // Ad store (key -> ad object)
-    protected val adStore = ConcurrentHashMap<String, AdType>()
+    // The single key managed by this view instance
+    protected var adKey: String? = null
 
     // Pending show callbacks (key -> callback)
     private val pendingShows = ConcurrentHashMap<String, () -> Unit>()
-
-    // Current showing key
-    private var currentShowingKey: String? = null
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -54,11 +48,11 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
 
     /**
      * Set ads format
-     * @param format AdsFormat để định nghĩa loại ad
-     * @throws IllegalArgumentException nếu format không hợp lệ cho loại ads này
+     * @param format AdsFormat to define the ad type
+     * @throws IllegalArgumentException if the format is invalid for this ad type
      */
     fun setAdsFormat(format: AdsFormat) {
-        // Validate format dựa trên loại ads (inline hoặc overlay)
+        // Validate format based on ad type (inline or overlay)
         if (!isValidFormat(format)) {
             throw IllegalArgumentException(
                 "Format $format is not valid for ${this::class.simpleName}. " +
@@ -71,32 +65,32 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     }
 
     /**
-     * Kiểm tra xem format có hợp lệ cho loại ads này không
-     * Các implementation cụ thể sẽ override method này
-     * @param format Format cần kiểm tra
-     * @return true nếu hợp lệ, false nếu không
+     * Check if the format is valid for this ad type
+     * Specific implementations will override this method
+     * @param format Format to check
+     * @return true if valid, false otherwise
      */
     protected abstract fun isValidFormat(format: AdsFormat): Boolean
 
     /**
-     * Get danh sách các format hợp lệ cho loại ads này
-     * Các implementation cụ thể sẽ override method này
-     * @return List các format hợp lệ
+     * Get the list of valid formats for this ad type
+     * Specific implementations will override this method
+     * @return List of valid formats
      */
     protected abstract fun getValidFormats(): List<AdsFormat>
 
     /**
-     * Implementation của shouldShowAd() từ interface
-     * @return true nếu nên hiển thị, false nếu không
+     * Implementation of shouldShowAd() from the interface
+     * @return true if ad should be shown, false otherwise
      */
     override fun shouldShowAd(): Boolean {
         return OzAdsManager.getInstance().shouldShowAds.value
     }
 
     /**
-     * Implementation của setPreloadKey() từ interface
-     * Preload ad với key này
-     * @param key Key để identify ad cần preload (đại diện cho placement)
+     * Implementation of setPreloadKey() from the interface.
+     * Sets the single ad key for this view instance and pre-registers its state.
+     * @param key The ad key to be managed by this instance.
      */
     override fun setPreloadKey(key: String) {
         if (adsFormat == null) {
@@ -104,38 +98,32 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
             return
         }
 
-        // Set state to IDLE nếu chưa có
-        adStates.putIfAbsent(key, AdState.IDLE)
-
-//        // Preload ad
-//        loadAd(key)
-//        Log.d(TAG, "Preload key set to: $key")
+        this.adKey = key
+        Log.d(TAG, "Ad key set to: $key")
+        // Set state to IDLE if not already present
+        OzAdsManager.getInstance().putAdStateIfAbsent(key, AdState.IDLE)
     }
 
     /**
-     * Get state của ad với key
-     * @param key Key để identify ad
-     * @return AdState hiện tại, IDLE nếu chưa có
+     * Get the state of the ad with the given key
+     * @param key Key to identify the ad
+     * @return Current AdState, or IDLE if not present
      */
     fun getAdState(key: String): AdState {
-        return adStates.getOrDefault(key, AdState.IDLE)
+        return OzAdsManager.getInstance().getAdState(key)
     }
 
     /**
-     * Implementation của loadAd() từ interface
-     * Load ad với preload key đã set (nếu có)
+     * Implementation of loadAd() from the interface.
+     * Loads the ad for the key managed by this instance.
      */
     override fun loadAd() {
-        // Nếu có preload key, load với key đó
-        // Nếu không, implementation cụ thể sẽ handle
-        Log.d(TAG, "loadAd() called without key")
-    }
+        val key = adKey
+        if (key == null) {
+            Log.w(TAG, "Ad key not set. Call setPreloadKey() first.")
+            return
+        }
 
-    /**
-     * Load ad với key cụ thể
-     * @param key Key để identify ad cần load
-     */
-    fun loadAd(key: String) {
         if (adsFormat == null) {
             Log.w(TAG, "Ads format not set. Call setAdsFormat() first")
             setAdState(key, AdState.IDLE)
@@ -173,11 +161,28 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
         }
     }
 
+    override fun loadThenShow(key: String) {
+        loadAd()
+        showAds(key)
+    }
+
+    fun loadThenShow() {
+        loadThenShow(key = adKey!!)
+    }
+
     /**
-     * Implementation của showAds() từ interface
-     * @param key Key để identify ad cần show (đại diện cho placement)
+     * Implementation of showAds() from the interface
+     * @param key Key to identify the ad to show. Must match the key managed by this instance.
      */
     override fun showAds(key: String) {
+        if (this.adKey == null) {
+            Log.d(TAG, "Ad key not set, setting it to '$key' from showAds.")
+            setPreloadKey(key)
+        } else if (this.adKey != key) {
+            Log.e(TAG, "Cannot show ad for key '$key', this view is already managing key '${this.adKey}'.")
+            return
+        }
+
         if (!shouldShowAd()) {
             Log.d(TAG, "Should not show ad, skipping showAds() for key: $key")
             setAdState(key, AdState.IDLE)
@@ -192,10 +197,9 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
                 setAdState(key, AdState.LOADING)
 
                 pendingShows[key] = {
-                    val ad = adStore[key]
+                    val ad: AdType? = OzAdsManager.getInstance().getAd(key)
                     if (ad != null) {
                         setAdState(key, AdState.SHOWING)
-                        currentShowingKey = key
                         onShowAds(key, ad)
                     } else {
                         onAdShowFailed(key, "Ad disappeared after loading.")
@@ -213,10 +217,9 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
             AdState.LOADING -> {
                 Log.d(TAG, "Ad loading for key: $key, setting pending show")
                 pendingShows[key] = {
-                    val ad = adStore[key]
+                    val ad: AdType? = OzAdsManager.getInstance().getAd(key)
                     if (ad != null) {
                         setAdState(key, AdState.SHOWING)
-                        currentShowingKey = key
                         onShowAds(key, ad)
                     } else {
                         onAdShowFailed(key, "Ad disappeared after loading.")
@@ -231,10 +234,9 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
 
             AdState.LOADED -> {
                 Log.d(TAG, "Showing ad for key: $key (state: LOADED)")
-                val ad = adStore[key]
+                val ad: AdType? = OzAdsManager.getInstance().getAd(key)
                 if (ad != null) {
                     setAdState(key, AdState.SHOWING)
-                    currentShowingKey = key
                     onShowAds(key, ad)
                 } else {
                     onAdShowFailed(key, "Ad object not found in store.")
@@ -245,7 +247,7 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
 
     /**
      * Hide ads
-     * Các implementation cụ thể sẽ override method này
+     * Specific implementations will override this method
      */
     protected abstract fun hideAds()
 
@@ -257,33 +259,33 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     protected abstract fun createAd(key: String): AdType?
 
     /**
-     * Abstract method để các implementation cụ thể load ad từ mediation
-     * @param key Key để identify ad cần load
+     * Abstract method for specific implementations to load an ad from mediation
+     * @param key Key to identify the ad to load
      * @param ad The ad object to be loaded
      */
     protected abstract fun onLoadAd(key: String, ad: AdType)
 
     /**
-     * Abstract method để các implementation cụ thể show ad
-     * @param key Key để identify ad cần show
+     * Abstract method for specific implementations to show an ad
+     * @param key Key to identify the ad to show
      * @param ad The ad object to be shown
      */
     protected abstract fun onShowAds(key: String, ad: AdType)
 
     /**
-     * Called khi ad load thành công
-     * Các implementation nên gọi method này sau khi load ad thành công
-     * @param key Key của ad đã load thành công
+     * Called when an ad loads successfully
+     * Implementations should call this method after a successful ad load
+     * @param key Key of the successfully loaded ad
      * @param ad The loaded ad object
      */
     protected open fun onAdLoaded(key: String, ad: AdType) {
         val currentState = getAdState(key)
         if (currentState == AdState.LOADING) {
             // Destroy previous ad if any, to prevent memory leaks
-            adStore[key]?.let { oldAd ->
-                destroyAd(oldAd)
-            }
-            adStore[key] = ad
+            val oldAd: AdType? = OzAdsManager.getInstance().getAd(key)
+            oldAd?.let { destroyAd(it) }
+
+            OzAdsManager.getInstance().setAd(key, ad as Any)
             setAdState(key, AdState.LOADED)
             Log.d(TAG, "Ad loaded successfully for key: $key")
 
@@ -296,9 +298,9 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     }
 
     /**
-     * Called khi ad load thất bại
-     * Các implementation nên gọi method này sau khi load ad thất bại
-     * @param key Key của ad đã load thất bại
+     * Called when an ad fails to load
+     * Implementations should call this method after a failed ad load
+     * @param key Key of the ad that failed to load
      * @param message Failure message
      */
     protected open fun onAdLoadFailed(key: String, message: String? = null) {
@@ -308,21 +310,23 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     }
 
     /**
-     * Called khi ad show thành công
-     * Các implementation nên gọi method này sau khi show ad thành công
-     * @param key Key của ad đã show thành công
+     * Called when an ad is shown successfully
+     * Implementations should call this method after a successful ad show
+     * @param key Key of the successfully shown ad
      */
     protected fun onAdShown(key: String) {
         Log.d(TAG, "Ad shown successfully for key: $key")
-        // State đã được set thành SHOWING trong showAds()
+        // State was already set to SHOWING in showAds()
     }
 
     /**
-     * Called khi ad dismissed/closed
-     * Các implementation nên gọi method này sau khi ad bị dismiss
-     * @param key Key của ad đã bị dismiss
+     * Called when an ad is dismissed/closed
+     * Implementations should call this method after an ad is dismissed
+     * @param key Key of the dismissed ad
      */
     protected fun onAdDismissed(key: String) {
+        if (adKey != key) return
+
         Log.d(TAG, "Ad dismissed for key: $key, cleaning up")
 
         // Destroy ad to prevent memory leak
@@ -330,45 +334,37 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
 
         // Reset state
         setAdState(key, AdState.IDLE)
-
-        // Clear current showing key if it matches
-        if (currentShowingKey == key) {
-            currentShowingKey = null
-        }
     }
 
     /**
-     * Called khi ad show thất bại
-     * Các implementation nên gọi method này sau khi show ad thất bại
-     * @param key Key của ad đã show thất bại
+     * Called when an ad fails to show
+     * Implementations should call this method after a failed ad show
+     * @param key Key of the ad that failed to show
      * @param message Failure message
      */
     protected fun onAdShowFailed(key: String, message: String? = null) {
+        if (adKey != key) return
+
         Log.e(TAG, "Ad show failed for key: $key. Reason: ${message ?: "Unknown"}")
         setAdState(key, AdState.IDLE)
-
-        // Clear current showing key if it matches
-        if (currentShowingKey == key) {
-            currentShowingKey = null
-        }
     }
 
     /**
-     * Set state của ad với key
-     * @param key Key để identify ad
-     * @param state State mới
+     * Set the state of the ad for a given key
+     * @param key Key to identify the ad
+     * @param state New state
      */
     private fun setAdState(key: String, state: AdState) {
-        adStates[key] = state
+        OzAdsManager.getInstance().setAdState(key, state)
         Log.d(TAG, "Ad state changed for key: $key -> $state")
     }
 
     /**
-     * Destroy ad với key cụ thể
-     * @param key Key của ad cần destroy
+     * Destroy ad for a specific key
+     * @param key Key of the ad to destroy
      */
     protected fun onDestroyAd(key: String) {
-        adStore.remove(key)?.let { ad ->
+        (OzAdsManager.getInstance().removeAd(key) as? AdType)?.let { ad ->
             destroyAd(ad)
         }
     }
@@ -380,27 +376,30 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     protected abstract fun destroyAd(ad: AdType)
 
     /**
-     * Destroy tất cả ads và cleanup resources
+     * Destroy the ad managed by this view instance and clean up resources
      */
     fun destroy() {
-        Log.d(TAG, "Destroying all ads")
-
-        // Destroy all ads in the store
-        adStore.values.forEach { ad ->
-            destroyAd(ad)
+        adKey?.let { key ->
+            Log.d(TAG, "Destroying ad for view instance, key: $key")
+            onDestroyAd(key)
+            setAdState(key, AdState.IDLE)
         }
+        adKey = null
 
-        // Clear all states and pending shows
-        adStore.clear()
-        adStates.clear()
+        // Clear all pending show callbacks for this view
         pendingShows.clear()
-        currentShowingKey = null
     }
 
     /**
-     * Get current showing key
-     * @return Key đang được show, null nếu không có
+     * Get the key of the ad currently being shown by this view instance, if any.
+     * @return The key of the ad currently being shown, or null.
      */
-    fun getCurrentShowingKey(): String? = currentShowingKey
+    fun getCurrentShowingKey(): String? {
+        return if (adKey != null && getAdState(adKey!!) == AdState.SHOWING) {
+            adKey
+        } else {
+            null
+        }
+    }
 }
 

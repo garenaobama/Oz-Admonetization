@@ -5,11 +5,13 @@ import com.google.android.gms.ads.MobileAds
 import com.oz.android.ads.network.admobs.AdMobManager
 import com.oz.android.ads.network.admobs.AdMobResult
 import com.oz.android.ads.network.admobs.IAdMobManager
+import com.oz.android.ads.oz_ads.ads_component.AdState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.resume
 
 /**
@@ -28,8 +30,57 @@ class OzAdsManager private constructor(
     private val _shouldShowAds = MutableStateFlow(true)
     val shouldShowAds = _shouldShowAds.asStateFlow()
 
+    // Ads state management (key -> state)
+    private val adStates = ConcurrentHashMap<String, AdState>()
+
+    // Ad store (key -> ad object)
+    private val adStore = ConcurrentHashMap<String, Any>()
+
     fun setShouldShowAds(shouldShow: Boolean) {
         _shouldShowAds.value = shouldShow
+    }
+
+    /**
+     * Get state of an ad
+     */
+    fun getAdState(key: String): AdState {
+        return adStates.getOrDefault(key, AdState.IDLE)
+    }
+
+    /**
+     * Set state of an ad
+     */
+    fun setAdState(key: String, state: AdState) {
+        adStates[key] = state
+    }
+
+    /**
+     * Set state of an ad if absent
+     */
+    fun putAdStateIfAbsent(key: String, state: AdState) {
+        adStates.putIfAbsent(key, state)
+    }
+
+    /**
+     * Get ad object from store
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getAd(key: String): T? {
+        return adStore[key] as? T
+    }
+
+    /**
+     * Save ad object to store
+     */
+    fun setAd(key: String, ad: Any) {
+        adStore[key] = ad
+    }
+
+    /**
+     * Remove ad object from store
+     */
+    fun removeAd(key: String): Any? {
+        return adStore.remove(key)
     }
 
     companion object {

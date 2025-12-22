@@ -17,7 +17,7 @@ class OzAdmobBannerAd @JvmOverloads constructor(
     context: Context,
 ) : InlineAds<AdmobBanner>(context) {
 
-    private var banner:AdmobBanner? = null
+    private var banner:AdmobBanner = AdmobBanner(context, "", null)
 
     companion object {
         private const val TAG = "OzAdmobBannerAd"
@@ -34,8 +34,8 @@ class OzAdmobBannerAd @JvmOverloads constructor(
      * @param adUnitId Ad unit ID từ AdMob
      */
     fun setAdUnitId(key: String, adUnitId: String) {
-        (adStore[key] as AdmobBanner).adUnitId = adUnitId
         setPreloadKey(key)
+        banner.adUnitId = adUnitId
         Log.d(TAG, "Ad unit ID set for key: $key -> $adUnitId")
     }
 
@@ -44,10 +44,10 @@ class OzAdmobBannerAd @JvmOverloads constructor(
      * @param key Key để identify placement
      * @return Ad unit ID, null nếu chưa được set
      */
-    fun getAdUnitId(key: String): String? = banner?.adUnitId
+    fun getAdUnitId(key: String): String? = banner.adUnitId
 
     override fun createAd(key: String): AdmobBanner? {
-        val adUnitId = (adStore[key] as AdmobBanner).adUnitId
+        val adUnitId = banner.adUnitId
         if (adUnitId.isBlank()) {
             Log.e(TAG, "Ad unit ID not set for key: $key")
             return null
@@ -96,12 +96,10 @@ class OzAdmobBannerAd @JvmOverloads constructor(
 
     override fun onPauseAd() {
         Log.d(TAG, "Pausing all banner ads")
-        adStore.values.forEach { it.pause() }
     }
 
     override fun onResumeAd() {
         Log.d(TAG, "Resuming all banner ads")
-        adStore.values.forEach { it.resume() }
     }
 }
 

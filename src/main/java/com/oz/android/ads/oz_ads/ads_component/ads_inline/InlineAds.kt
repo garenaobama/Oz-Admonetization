@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import com.oz.android.ads.oz_ads.OzAdsManager
 import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.OzAds
 
@@ -51,9 +52,6 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     // Ad visibility state
     private var isAdVisible = false
 
-    // Track preload key for refresh and visibility logic
-    private var preloadKey: String? = null
-
     override fun isValidFormat(format: AdsFormat): Boolean {
         return format == AdsFormat.BANNER || format == AdsFormat.NATIVE
     }
@@ -66,16 +64,11 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         return super.shouldShowAd() && isAdVisible
     }
 
-    override fun setPreloadKey(key: String) {
-        this.preloadKey = key
-        super.setPreloadKey(key)
-    }
-
     override fun loadAd() {
-        preloadKey?.let { key ->
-            super.loadAd(key)
+        adKey?.let { key ->
+            super.loadAd()
         } ?: run {
-            Log.w(TAG, "No preload key set. Call setPreloadKey() first or use loadAd(key: String)")
+            Log.w(TAG, "No key set. Init the ads with key and id first")
         }
     }
 
@@ -146,9 +139,8 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      */
     fun refreshAd() {
         Log.d(TAG, "Refreshing ad...")
-        preloadKey?.let { key ->
-            onDestroyAd(key)
-            loadAd(key)
+        adKey?.let {
+            loadThenShow()
         }
     }
 
@@ -156,7 +148,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      * Restart auto refresh mechanism
      */
     private fun restartAutoRefresh() {
-        preloadKey?.let { key ->
+        adKey?.let { key ->
             if (isAdLoaded(key) && isAdVisible) {
                 scheduleNextRefresh()
             }
@@ -187,12 +179,12 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      */
     fun resume() {
         isAdVisible = true
-        preloadKey?.let { key ->
+        adKey?.let { key ->
             if (super.shouldShowAd()) { // Use super.shouldShowAd to avoid isAdVisible check
                 if (isAdLoaded(key)) {
                     showAds(key)
                 } else {
-                    loadAd(key)
+                    loadAd()
                 }
                 scheduleNextRefresh()
             }
@@ -206,9 +198,9 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         isAdVisible = true
-        preloadKey?.let { key ->
+        adKey?.let { key ->
             if (super.shouldShowAd() && !isAdLoaded(key)) {
-                loadAd(key)
+                loadAd()
             }
         }
     }
@@ -244,7 +236,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      * @return true nếu ad đã load, false nếu chưa
      */
     protected fun isAdLoaded(key: String): Boolean {
-        return adStore.containsKey(key)
+        return OzAdsManager.getInstance().getAd<AdType>(key) != null
     }
 
     /**

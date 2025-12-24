@@ -144,6 +144,7 @@ class AdmobInterstitial(
                 // don't show the ad a second time.
                 interstitialAd = null
                 isLoaded = false
+                listener?.onAdDismissedFullScreenContent()
             }
 
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
@@ -153,11 +154,13 @@ class AdmobInterstitial(
                 // don't show the ad a second time.
                 interstitialAd = null
                 isLoaded = false
+                listener?.onAdFailedToShowFullScreenContent(adError)
             }
 
             override fun onAdShowedFullScreenContent() {
                 // Called when fullscreen content is shown.
                 Log.d(TAG, "Ad showed fullscreen content")
+                listener?.onAdShowedFullScreenContent()
             }
 
             override fun onAdImpression() {
@@ -182,3 +185,4 @@ class AdmobInterstitial(
         return isLoaded && interstitialAd != null
     }
 }
+

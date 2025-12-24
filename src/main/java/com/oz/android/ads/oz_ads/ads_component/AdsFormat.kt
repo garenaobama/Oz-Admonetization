@@ -13,7 +13,7 @@ enum class AdsFormat {
     
     // Overlay formats - hiển thị fullscreen/overlay
     INTERSTITIAL, // Interstitial ad (fullscreen)
-    OPEN,         // Open ad (app open ad)
+    APP_OPEN,         // Open ad (app open ad)
     NATIVE_FULLSCREEN, // Native ad fullscreen
     REWARD,       // Rewarded ad
     REWARD_INTERSTITIAL; // Rewarded interstitial ad
@@ -50,5 +50,6 @@ enum class AdsFormat {
         }
     }
 }
+
 
 

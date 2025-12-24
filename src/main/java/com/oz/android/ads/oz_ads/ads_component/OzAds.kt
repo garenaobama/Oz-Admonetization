@@ -330,7 +330,7 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
      * Implementations should call this method after an ad is dismissed
      * @param key Key of the dismissed ad
      */
-    protected fun onAdDismissed(key: String) {
+    protected open fun onAdDismissed(key: String) {
         if (adKey != key) return
 
         Log.d(TAG, "Ad dismissed for key: $key, cleaning up")
@@ -348,7 +348,7 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
      * @param key Key of the ad that failed to show
      * @param message Failure message
      */
-    protected fun onAdShowFailed(key: String, message: String? = null) {
+    protected open fun onAdShowFailed(key: String, message: String? = null) {
         if (adKey != key) return
 
         Log.e(TAG, "Ad show failed for key: $key. Reason: ${message ?: "Unknown"}")
@@ -384,7 +384,7 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     /**
      * Destroy the ad managed by this view instance and clean up resources
      */
-    fun destroy() {
+    open fun destroy() {
         adKey?.let { key ->
             Log.d(TAG, "Destroying ad for view instance, key: $key")
             onDestroyAd(key)

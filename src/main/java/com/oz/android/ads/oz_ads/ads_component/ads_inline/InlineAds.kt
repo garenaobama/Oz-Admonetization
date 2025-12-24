@@ -1,6 +1,7 @@
 package com.oz.android.ads.oz_ads.ads_component.ads_inline
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -10,6 +11,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import com.oz.android.ads.oz_ads.OzAdsManager
 import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.OzAds
+import io.github.usefulness.shimmer.android.ShimmerFrameLayout
 
 /**
  * Abstract class để quản lý inline ads (banner, native) hiển thị cùng với content
@@ -52,6 +54,32 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     // Ad visibility state
     private var isAdVisible = false
 
+    //shimmer
+    private var shimmerLayout: ShimmerFrameLayout? = null
+
+    init {
+        setupShimmerLayout()
+    }
+
+    private fun setupShimmerLayout() {
+        shimmerLayout = ShimmerFrameLayout(context)
+        shimmerLayout?.layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
+
+        // Add a placeholder view inside shimmer to make it visible
+        val placeholder = View(context)
+        placeholder.layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
+        placeholder.setBackgroundColor(Color.LTGRAY)
+        shimmerLayout?.addView(placeholder)
+
+        shimmerLayout?.visibility = View.GONE
+        addView(shimmerLayout)
+    }
+
+    override fun onAdShown(key: String) {
+        super.onAdShown(key)
+        stopShimmer()
+    }
+
     override fun isValidFormat(format: AdsFormat): Boolean {
         return format == AdsFormat.BANNER || format == AdsFormat.NATIVE
     }
@@ -62,6 +90,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
 
     override fun loadAd() {
         adKey?.let { key ->
+            startShimmer()
             super.loadAd()
         } ?: run {
             Log.w(TAG, "No key set. Init the ads with key and id first")
@@ -109,6 +138,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      */
     override fun onAdLoadFailed(key: String, message: String?) {
         super.onAdLoadFailed(key, message)
+        stopShimmer()
 
         if (isAdVisible) {
             scheduleNextRefresh()
@@ -204,7 +234,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      */
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
-        val newVisibility = visibility == VISIBLE
+        val newVisibility = visibility == View.VISIBLE
         if (isAdVisible == newVisibility) return
         isAdVisible = newVisibility
 
@@ -248,7 +278,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
 
         for (i in 0 until childCount) {
             val child = getChildAt(i)
-            if (child.visibility != GONE) {
+            if (child.visibility != View.GONE) {
                 measureChild(child, widthMeasureSpec, heightMeasureSpec)
                 maxWidth = maxOf(maxWidth, child.measuredWidth)
                 maxHeight = maxOf(maxHeight, child.measuredHeight)
@@ -267,9 +297,19 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         for (i in 0 until childCount) {
             val child = getChildAt(i)
-            if (child.visibility != GONE) {
+            if (child.visibility != View.GONE) {
                 child.layout(0, 0, child.measuredWidth, child.measuredHeight)
             }
         }
+    }
+
+    fun startShimmer(){
+        shimmerLayout?.visibility = View.VISIBLE
+        shimmerLayout?.startShimmer()
+    }
+
+    fun stopShimmer(){
+        shimmerLayout?.stopShimmer()
+        shimmerLayout?.visibility = View.GONE
     }
 }

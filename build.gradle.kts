@@ -50,6 +50,7 @@ android {
         implementation(libs.kotlinx.coroutines.android)
         implementation(libs.play.services.ads)
         implementation(libs.user.messaging.platform)
+        implementation(libs.shimmer.android.core)
 
         testImplementation(libs.junit)
         androidTestImplementation(libs.androidx.junit)

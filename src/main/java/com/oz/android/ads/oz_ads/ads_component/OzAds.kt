@@ -320,7 +320,7 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
      * Implementations should call this method after a successful ad show
      * @param key Key of the successfully shown ad
      */
-    protected fun onAdShown(key: String) {
+    protected open fun onAdShown(key: String) {
         Log.d(TAG, "Ad shown successfully for key: $key")
         // State was already set to SHOWING in showAds()
     }

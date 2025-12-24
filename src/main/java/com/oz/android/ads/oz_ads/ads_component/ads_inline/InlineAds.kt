@@ -72,8 +72,6 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         if (shimmerResId != 0) {
             // Inflate the XML layout into the ShimmerFrameLayout
             LayoutInflater.from(context).inflate(shimmerResId, shimmerLayout, true)
-        } else {
-            Log.w(TAG, "Shimmer layout resource ID is 0. Shimmer might not appear.")
         }
 
         shimmerLayout?.visibility = GONE
@@ -118,7 +116,12 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
             return
         }
         refreshTime = timeInMillis
-        restartAutoRefresh()
+        // Only restart if we are already visible and loaded
+        adKey?.let { key ->
+            if(isAdVisible && isAdLoaded(key)) {
+                scheduleNextRefresh()
+            }
+        }
     }
 
     /**
@@ -137,6 +140,10 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         super.onAdLoaded(key, ad)
 
         if (isAdVisible) {
+            // FIX: Show the ad immediately when it loads!
+            showAds(key)
+
+            // FIX: Start the timer only AFTER the ad has loaded/shown
             scheduleNextRefresh()
         }
     }
@@ -152,6 +159,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         stopShimmer()
 
         if (isAdVisible) {
+            // If failed, wait for the refresh time then try again
             scheduleNextRefresh()
         }
     }
@@ -219,13 +227,18 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     fun resume() {
         isAdVisible = true
         adKey?.let { key ->
-            if (isAdEnable()) { // Use super.shouldShowAd to avoid isAdVisible check
+            if (isAdEnable()) {
                 if (isAdLoaded(key)) {
+                    // CASE 1: Ad is already loaded. Show it immediately.
                     showAds(key)
+                    // Since it's shown, we now start the timer for the *next* refresh.
+                    scheduleNextRefresh()
                 } else {
+                    // CASE 2: Ad is NOT loaded. Load it.
+                    // DO NOT call scheduleNextRefresh() here.
+                    // Wait for onAdLoaded() to call it.
                     loadAd()
                 }
-                scheduleNextRefresh()
             }
         }
         onResumeAd()

@@ -192,17 +192,6 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     }
 
     /**
-     * Restart auto refresh mechanism
-     */
-    private fun restartAutoRefresh() {
-        adKey?.let { key ->
-            if (isAdLoaded(key) && isAdVisible) {
-                scheduleNextRefresh()
-            }
-        }
-    }
-
-    /**
      * Cancel auto refresh
      */
     private fun cancelAutoRefresh() {

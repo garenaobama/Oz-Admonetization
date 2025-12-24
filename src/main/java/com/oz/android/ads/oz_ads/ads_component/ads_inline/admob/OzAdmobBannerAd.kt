@@ -39,13 +39,6 @@ class OzAdmobBannerAd @JvmOverloads constructor(
         Log.d(TAG, "Ad unit ID set for key: $key -> $adUnitId")
     }
 
-    /**
-     * Get ad unit ID cho một key
-     * @param key Key để identify placement
-     * @return Ad unit ID, null nếu chưa được set
-     */
-    fun getAdUnitId(key: String): String? = banner.adUnitId
-
     override fun createAd(key: String): AdmobBanner? {
         val adUnitId = banner.adUnitId
         if (adUnitId.isBlank()) {

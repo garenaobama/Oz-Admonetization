@@ -7,7 +7,6 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
-import com.oz.android.ads.network.admobs.ads_component.IAdmobAds
 import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
 
 /**
@@ -18,7 +17,7 @@ class AdmobBanner(
     context: Context,
     adUnitId: String,
     listener: OzAdmobListener<AdmobBanner>?
-) : IAdmobAds, AdmobBase<AdmobBanner>(
+) : AdmobBase<AdmobBanner>(
     context,
     adUnitId,
     listener
@@ -129,17 +128,17 @@ class AdmobBanner(
      * Lưu ý: Banner cần container, sử dụng loadThenShow(container: ViewGroup) thay vì method này
      */
     override fun loadThenShow() {
-        Log.w(
-            TAG,
-            "loadThenShow() called without container. Use loadThenShow(container: ViewGroup) for banner ads"
-        )
+        if(pendingContainer != null){
+            val container = pendingContainer!!
+            loadThenShow(container)
+        }
     }
 
     /**
      * Load quảng cáo và tự động hiển thị khi load xong
      * @param container ViewGroup để chứa banner ad
      */
-    fun loadThenShow(container: ViewGroup) {
+     fun loadThenShow(container: ViewGroup) {
         pendingContainer = container
         load()
     }

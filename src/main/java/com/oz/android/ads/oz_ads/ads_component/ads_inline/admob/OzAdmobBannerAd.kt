@@ -3,6 +3,7 @@ package com.oz.android.ads.oz_ads.ads_component.ads_inline.admob
 import AdmobBanner
 import android.content.Context
 import android.util.Log
+import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.LoadAdError
 import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
 import com.oz.android.ads.oz_ads.ads_component.AdsFormat
@@ -72,6 +73,18 @@ class OzAdmobBannerAd @JvmOverloads constructor(
     override fun onLoadAd(key: String, ad: AdmobBanner) {
         Log.d(TAG, "Loading banner ad for key: $key")
         ad.load()
+    }
+
+    override fun setShimmerSize(key: String) {
+        // Calculate the height of the adaptive banner (assuming 360 width as per AdmobBanner implementation)
+        // If we could access the specific width used in AdmobBanner, that would be better, but 360 is common standard
+        val adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, 360)
+        val heightPx = adSize.getHeightInPixels(context)
+        
+        shimmerLayout?.let { layout ->
+            layout.layoutParams.height = heightPx
+            layout.requestLayout()
+        }
     }
 
     override fun onShowAds(key: String, ad: AdmobBanner) {

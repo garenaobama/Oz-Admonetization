@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -55,7 +56,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     private var isAdVisible = false
 
     //shimmer
-    private var shimmerLayout: ShimmerFrameLayout? = null
+    protected var shimmerLayout: ShimmerFrameLayout? = null
 
     init {
         setupShimmerLayout()
@@ -75,6 +76,28 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         addView(shimmerLayout)
     }
 
+    /**
+     * Set shimmer view layout resource
+     * @param layoutResId Layout resource ID for shimmer content
+     */
+    fun setShimmerLayoutResource(layoutResId: Int) {
+        shimmerLayout?.let { layout ->
+            layout.removeAllViews()
+            LayoutInflater.from(context).inflate(layoutResId, layout, true)
+        }
+    }
+
+    /**
+     * Set shimmer height in dp
+     * @param heightDp Height in dp
+     */
+    fun setShimmerHeight(heightDp: Float) {
+        val density = context.resources.displayMetrics.density
+        val heightPx = (heightDp * density).toInt()
+        shimmerLayout?.layoutParams?.height = heightPx
+        shimmerLayout?.requestLayout()
+    }
+
     override fun onAdShown(key: String) {
         super.onAdShown(key)
         stopShimmer()
@@ -88,8 +111,14 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         return listOf(AdsFormat.BANNER, AdsFormat.NATIVE)
     }
 
+    /**
+     * Abstract method để các implementation set shimmer size dựa trên cấu hình ad
+     */
+    protected abstract fun setShimmerSize(key: String)
+
     override fun loadAd() {
         adKey?.let { key ->
+            setShimmerSize(key)
             startShimmer()
             super.loadAd()
         } ?: run {

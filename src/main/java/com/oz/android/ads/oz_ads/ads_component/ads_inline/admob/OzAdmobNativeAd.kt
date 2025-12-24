@@ -96,31 +96,66 @@ class OzAdmobNativeAd @JvmOverloads constructor(
         ad.load()
     }
 
+    override fun setShimmerSize(key: String) {
+        var heightPx = 0
+        val nativeAdView = nativeAdViews[key]
+        
+        if (nativeAdView != null && nativeAdView.layoutParams != null && nativeAdView.layoutParams.height > 0) {
+             heightPx = nativeAdView.layoutParams.height
+        } else {
+             val resId = layoutId
+             if (resId != 0) {
+                 try {
+                     // Inflate a dummy view to check height
+                     val view = LayoutInflater.from(context).inflate(resId, null)
+                     // If the root view has a fixed height, use it
+                     if (view.layoutParams != null && view.layoutParams.height > 0) {
+                          heightPx = view.layoutParams.height
+                     } else {
+                          // Measure the view to get an estimated height
+                          val displayMetrics = context.resources.displayMetrics
+                          val widthSpec = MeasureSpec.makeMeasureSpec(displayMetrics.widthPixels, MeasureSpec.AT_MOST)
+                          val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+                          view.measure(widthSpec, heightSpec)
+                          heightPx = view.measuredHeight
+                     }
+                 } catch (e: Exception) {
+                     Log.e(TAG, "Failed to inflate layout for shimmer size: ${e.message}")
+                 }
+             }
+        }
+        
+        if (heightPx > 0) {
+            shimmerLayout?.let { layout ->
+                layout.layoutParams.height = heightPx
+                layout.requestLayout()
+            }
+        }
+    }
+
     override fun onShowAds(key: String, ad: AdmobNativeAdvanced) {
         var nativeAdView = nativeAdViews[key]
         
         // Nếu chưa có NativeAdView, kiểm tra xem có layoutId không
         if (nativeAdView == null) {
             val resId = layoutId
-            if (resId != null) {
-                Log.d(TAG, "Inflating NativeAdView from layout ID: $resId")
-                try {
-                    val inflatedView = LayoutInflater.from(context).inflate(resId, null)
-                    if (inflatedView is NativeAdView) {
-                        nativeAdView = inflatedView
-                        bindStandardViews(nativeAdView)
-                        // Cache lại để dùng cho lần sau
-                        nativeAdViews[key] = nativeAdView
-                    } else {
-                        Log.e(TAG, "Inflated view is not a NativeAdView")
-                        onAdShowFailed(key, "Inflated view is not a NativeAdView")
-                        return
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to inflate layout: ${e.message}")
-                    onAdShowFailed(key, "Failed to inflate layout: ${e.message}")
+            Log.d(TAG, "Inflating NativeAdView from layout ID: $resId")
+            try {
+                val inflatedView = LayoutInflater.from(context).inflate(resId, null)
+                if (inflatedView is NativeAdView) {
+                    nativeAdView = inflatedView
+                    bindStandardViews(nativeAdView)
+                    // Cache lại để dùng cho lần sau
+                    nativeAdViews[key] = nativeAdView
+                } else {
+                    Log.e(TAG, "Inflated view is not a NativeAdView")
+                    onAdShowFailed(key, "Inflated view is not a NativeAdView")
                     return
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to inflate layout: ${e.message}")
+                onAdShowFailed(key, "Failed to inflate layout: ${e.message}")
+                return
             }
         }
 

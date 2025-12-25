@@ -180,7 +180,7 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
         showAds(key)
     }
 
-    fun loadThenShow() {
+    open fun loadThenShow() {
         loadThenShow(key = adKey!!)
     }
 
@@ -207,25 +207,7 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
 
         when (currentState) {
             AdState.IDLE -> {
-                Log.d(TAG, "Showing ad for key: $key (state: IDLE -> loadThenShow)")
-                setAdState(key, AdState.LOADING)
-
-                pendingShows[key] = {
-                    val ad: AdType? = OzAdsManager.getInstance().getAd(key)
-                    if (ad != null) {
-                        setAdState(key, AdState.SHOWING)
-                        onShowAds(key, ad)
-                    } else {
-                        onAdShowFailed(key, "Ad disappeared after loading.")
-                    }
-                }
-
-                val ad = createAd(key)
-                if (ad == null) {
-                    onAdLoadFailed(key, "Failed to create ad object for loadThenShow.")
-                    return
-                }
-                onLoadAd(key, ad)
+                onAdShowFailed(key, "Ad is not loaded, or not loading.")
             }
 
             AdState.LOADING -> {

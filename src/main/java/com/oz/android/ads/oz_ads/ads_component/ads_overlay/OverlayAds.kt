@@ -7,11 +7,10 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.Window
 import android.view.WindowManager
 import com.oz.android.ads.R
+import com.oz.android.ads.oz_ads.ads_component.AdState
 import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.OzAds
 
@@ -39,7 +38,7 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
 
     // Loading indicator view (for ViewGroup display)
     protected var loadingIndicator: View? = null
-    
+
     // Loading dialog (for overlay display when not in layout)
     private var loadingDialog: Dialog? = null
 
@@ -147,14 +146,17 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
         lastAdClosedTime = System.currentTimeMillis()
         Log.d(TAG, "Ad dismissed for key: $key. Updated lastAdClosedTime to: $lastAdClosedTime")
     }
-    
+
     /**
      * Since Overlay ads are not ViewGroups that display content directly,
      * hideAds implementation might be empty or specific to clearing internal states.
      * For full-screen ads, "hiding" usually means they are dismissed, which is handled by the SDK.
      */
     override fun hideAds() {
-         Log.d(TAG, "hideAds called - no-op for Overlay ads as they manage their own visibility via SDK")
+        Log.d(
+            TAG,
+            "hideAds called - no-op for Overlay ads as they manage their own visibility via SDK"
+        )
     }
 
     /**
@@ -180,7 +182,7 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
         // Hide dialog if showing
         loadingDialog?.dismiss()
         loadingDialog = null
-        
+
         // Hide ViewGroup child if showing
         loadingIndicator?.visibility = View.GONE
         Log.d(TAG, "Loading indicator hidden")
@@ -203,10 +205,13 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
             val dialog = Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar)
             val view = LayoutInflater.from(activity).inflate(loadingResId, null)
             dialog.setContentView(view)
-            
+
             // Make dialog fullscreen and non-cancelable
             dialog.window?.let { window ->
-                window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+                window.setLayout(
+                    WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.MATCH_PARENT
+                )
                 window.setFlags(
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                     WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
@@ -216,7 +221,7 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
                 )
             }
-            
+
             dialog.setCancelable(false)
             dialog.setCanceledOnTouchOutside(false)
             dialog.show()
@@ -226,12 +231,22 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Override loadAd to show loading indicator
-     */
-    override fun loadAd() {
+    fun loadAd(loadInBackground: Boolean = true) {
+        if (adKey == null) return
+        when (getAdState(adKey!!)) {
+            AdState.IDLE -> {
+                if (!loadInBackground)
+                    showLoading()
+                super.loadAd()
+            }
+
+            else -> super.loadAd()
+        }
+    }
+
+    override fun loadThenShow() {
         showLoading()
-        super.loadAd()
+        super.loadThenShow()
     }
 
     /**

@@ -146,7 +146,7 @@ if (appOpenAd.getRemainingCooldownTime() == 0L) {
 ```
 ## License
 
-Copyright 2025 [Your Name or Organization Name]
+Copyright 2025 Opening Zone
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

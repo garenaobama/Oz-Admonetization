@@ -3,6 +3,9 @@ package com.oz.android.ads.network.admobs.ads_component
 import android.content.Context
 import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.OnPaidEventListener
+import com.google.android.gms.ads.ResponseInfo
+import com.oz.android.ads.utils.event.OzEventLogger
 import com.oz.android.wrapper.OzAdError
 import com.oz.android.wrapper.OzAdListener
 
@@ -38,6 +41,20 @@ abstract class AdmobBase<AdType>(
      * This relies on the listener being set.
      */
     abstract fun loadThenShow()
+
+    /**
+     * Paid admob event
+     */
+     fun getOnPaidListener(response: ResponseInfo?): OnPaidEventListener {
+        return OnPaidEventListener { adValue ->
+            OzEventLogger.logPaidAdImpression(
+                context,
+                adValue,
+                adUnitId,
+                response
+            )
+        }
+     }
 }
 
 fun AdError.toOzError(): OzAdError {

@@ -30,7 +30,7 @@ class AdmobNativeAdvanced(
     context: Context,
     adUnitId: String,
     listener: OzAdListener<AdmobNativeAdvanced>? = null
-) : AdmobBase<AdmobNativeAdvanced>(context, adUnitId, listener){
+) : AdmobBase<AdmobNativeAdvanced>(context, adUnitId, listener) {
 
     private var currentNativeAd: NativeAd? = null
     private var isLoaded = false
@@ -69,9 +69,7 @@ class AdmobNativeAdvanced(
                 // destroy and return or you may get a memory leak
                 var activityDestroyed = false
                 if (context is AppCompatActivity) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                        activityDestroyed = context.isDestroyed
-                    }
+                    activityDestroyed = context.isDestroyed
                     if (activityDestroyed || context.isFinishing || context.isChangingConfigurations) {
                         nativeAd.destroy()
                         return@forNativeAd
@@ -84,6 +82,7 @@ class AdmobNativeAdvanced(
                 currentNativeAd = nativeAd
                 isLoaded = true
                 adIsLoading = false
+                currentNativeAd?.setOnPaidEventListener(getOnPaidListener(currentNativeAd!!.responseInfo))
 
                 Log.d(TAG, "Native ad loaded successfully")
 
@@ -117,7 +116,8 @@ class AdmobNativeAdvanced(
                 .withAdListener(
                     object : AdListener() {
                         override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                            val error = "domain: ${loadAdError.domain}, code: ${loadAdError.code}, message: ${loadAdError.message}"
+                            val error =
+                                "domain: ${loadAdError.domain}, code: ${loadAdError.code}, message: ${loadAdError.message}"
                             Log.e(TAG, "Native ad failed to load: $error")
                             currentNativeAd = null
                             isLoaded = false
@@ -150,7 +150,10 @@ class AdmobNativeAdvanced(
      * Lưu ý: Native ad cần container và NativeAdView, sử dụng show(container, nativeAdView) thay vì method này
      */
     override fun show() {
-        Log.w(TAG, "show() called without container and NativeAdView. Use show(container: ViewGroup, nativeAdView: NativeAdView) for native ads")
+        Log.w(
+            TAG,
+            "show() called without container and NativeAdView. Use show(container: ViewGroup, nativeAdView: NativeAdView) for native ads"
+        )
     }
 
     /**
@@ -203,7 +206,10 @@ class AdmobNativeAdvanced(
      * Lưu ý: Native ad cần container và NativeAdView, sử dụng loadThenShow(container, nativeAdView) thay vì method này
      */
     override fun loadThenShow() {
-        Log.w(TAG, "loadThenShow() called without container and NativeAdView. Use loadThenShow(container: ViewGroup, nativeAdView: NativeAdView) for native ads")
+        Log.w(
+            TAG,
+            "loadThenShow() called without container and NativeAdView. Use loadThenShow(container: ViewGroup, nativeAdView: NativeAdView) for native ads"
+        )
     }
 
     /**
@@ -300,7 +306,8 @@ class AdmobNativeAdvanced(
                 starRatingView.visibility = android.view.View.INVISIBLE
             } else {
                 starRatingView.visibility = android.view.View.VISIBLE
-                (starRatingView as? android.widget.RatingBar)?.rating = nativeAd.starRating!!.toFloat()
+                (starRatingView as? android.widget.RatingBar)?.rating =
+                    nativeAd.starRating!!.toFloat()
             }
         }
 

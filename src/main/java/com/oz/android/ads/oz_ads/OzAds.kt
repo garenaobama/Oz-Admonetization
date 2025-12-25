@@ -1,4 +1,4 @@
-package com.oz.android.ads.oz_ads.ads_component
+package com.oz.android.ads.oz_ads
 
 import android.content.Context
 import android.util.AttributeSet

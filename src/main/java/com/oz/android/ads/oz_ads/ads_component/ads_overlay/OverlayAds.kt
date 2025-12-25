@@ -11,9 +11,8 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import androidx.annotation.RestrictTo
 import com.oz.android.ads.R
-import com.oz.android.ads.oz_ads.ads_component.AdState
-import com.oz.android.ads.oz_ads.ads_component.OzAds
-import com.oz.android.wrapper.OzAdListener
+import com.oz.android.ads.oz_ads.AdState
+import com.oz.android.ads.oz_ads.OzAds
 
 /**
  * Abstract class for managing fullscreen overlay ads (Interstitial, App Open)

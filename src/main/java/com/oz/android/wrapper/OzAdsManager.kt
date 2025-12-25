@@ -5,7 +5,7 @@ import com.google.android.gms.ads.MobileAds
 import com.oz.android.ads.network.admobs.AdMobManager
 import com.oz.android.ads.network.admobs.AdMobResult
 import com.oz.android.ads.network.admobs.IAdMobManager
-import com.oz.android.ads.oz_ads.ads_component.AdState
+import com.oz.android.ads.oz_ads.AdState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

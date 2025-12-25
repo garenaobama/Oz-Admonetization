@@ -5,10 +5,13 @@ import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdValue
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.OnPaidEventListener
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
 import com.oz.android.ads.network.admobs.ads_component.toOzError
+import com.oz.android.ads.utils.event.OzEventLogger
 import com.oz.android.wrapper.OzAdListener
 
 /**
@@ -48,7 +51,7 @@ class AdmobBanner(
             adView = AdView(context).apply {
                 this.adUnitId = this@AdmobBanner.adUnitId
                 setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, 360))
-
+                onPaidEventListener = getOnPaidListener(responseInfo)
                 adListener = object : AdListener() {
                     override fun onAdLoaded() {
                         isLoaded = true
@@ -131,7 +134,7 @@ class AdmobBanner(
      * Lưu ý: Banner cần container, sử dụng loadThenShow(container: ViewGroup) thay vì method này
      */
     override fun loadThenShow() {
-        if(pendingContainer != null){
+        if (pendingContainer != null) {
             val container = pendingContainer!!
             loadThenShow(container)
         }
@@ -141,7 +144,7 @@ class AdmobBanner(
      * Load quảng cáo và tự động hiển thị khi load xong
      * @param container ViewGroup để chứa banner ad
      */
-     fun loadThenShow(container: ViewGroup) {
+    fun loadThenShow(container: ViewGroup) {
         pendingContainer = container
         load()
     }

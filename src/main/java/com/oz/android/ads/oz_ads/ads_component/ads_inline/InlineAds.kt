@@ -12,7 +12,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.annotation.RestrictTo
 import com.oz.android.ads.R
 import com.oz.android.wrapper.OzAdsManager
-import com.oz.android.ads.oz_ads.ads_component.OzAds
+import com.oz.android.ads.oz_ads.OzAds
 import io.github.usefulness.shimmer.android.ShimmerFrameLayout
 
 /**

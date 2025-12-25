@@ -59,6 +59,7 @@ class AdmobAppOpen(
                 override fun onAdLoaded(ad: AppOpenAd) {
                     Log.d(TAG, "App Open ad loaded successfully")
                     appOpenAd = ad
+                    appOpenAd?.onPaidEventListener = getOnPaidListener(appOpenAd!!.responseInfo)
                     isLoaded = true
                     adIsLoading = false
                     loadTime = Date().time

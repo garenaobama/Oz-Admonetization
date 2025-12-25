@@ -9,7 +9,6 @@ import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.oz.android.ads.oz_ads.OzAdsManager
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Abstract class chung cho tất cả các loại OzAds
@@ -33,15 +32,11 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
         private const val TAG = "OzAds"
     }
 
-    // Ads format
-    protected var adsFormat: AdsFormat? = null
-        private set
-
     // The single key managed by this view instance
     protected var adKey: String? = null
 
-    // Pending show callbacks (key -> callback)
-    private val pendingShows = ConcurrentHashMap<String, () -> Unit>()
+    // Single pending show callback instead of a Map
+    private var pendingShowRunnable: (() -> Unit)? = null
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -55,44 +50,11 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     }
 
     /**
-     * Set ads format
-     * @param format AdsFormat to define the ad type
-     * @throws IllegalArgumentException if the format is invalid for this ad type
-     */
-    fun setAdsFormat(format: AdsFormat) {
-        // Validate format based on ad type (inline or overlay)
-        if (!isValidFormat(format)) {
-            throw IllegalArgumentException(
-                "Format $format is not valid for ${this::class.simpleName}. " +
-                        "Valid formats: ${getValidFormats().joinToString()}"
-            )
-        }
-
-        adsFormat = format
-        Log.d(TAG, "Ads format set to: $format")
-    }
-
-    /**
-     * Check if the format is valid for this ad type
-     * Specific implementations will override this method
-     * @param format Format to check
-     * @return true if valid, false otherwise
-     */
-    protected abstract fun isValidFormat(format: AdsFormat): Boolean
-
-    /**
-     * Get the list of valid formats for this ad type
-     * Specific implementations will override this method
-     * @return List of valid formats
-     */
-    protected abstract fun getValidFormats(): List<AdsFormat>
-
-    /**
      * Implementation of isAdEnable() from the interface
      * @return true if ad should be shown or load, false otherwise
      */
     override fun isAdEnable(): Boolean {
-        Log.d(TAG, "isAdEnable: " +OzAdsManager.getInstance().enableAd.value)
+        Log.d(TAG, "isAdEnable: " + OzAdsManager.getInstance().enableAd.value)
         return OzAdsManager.getInstance().enableAd.value
     }
 
@@ -102,11 +64,6 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
      * @param key The ad key to be managed by this instance.
      */
     override fun setPreloadKey(key: String) {
-        if (adsFormat == null) {
-            Log.w(TAG, "Ads format not set. Call setAdsFormat() first")
-            return
-        }
-
         this.adKey = key
         Log.d(TAG, "Ad key set to: $key")
         // Set state to IDLE if not already present
@@ -130,12 +87,6 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
         val key = adKey
         if (key == null) {
             Log.w(TAG, "Ad key not set. Call setPreloadKey() first.")
-            return
-        }
-
-        if (adsFormat == null) {
-            Log.w(TAG, "Ads format not set. Call setAdsFormat() first")
-            setAdState(key, AdState.IDLE)
             return
         }
 
@@ -181,7 +132,8 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     }
 
     open fun loadThenShow() {
-        loadThenShow(key = adKey!!)
+        // Ensure adKey is not null before calling
+        adKey?.let { loadThenShow(it) } ?: Log.e(TAG, "loadThenShow called but adKey is null")
     }
 
     /**
@@ -212,7 +164,8 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
 
             AdState.LOADING -> {
                 Log.d(TAG, "Ad loading for key: $key, setting pending show")
-                pendingShows[key] = {
+                // Store the logic to run once loaded
+                pendingShowRunnable = {
                     val ad: AdType? = OzAdsManager.getInstance().getAd(key)
                     if (ad != null) {
                         setAdState(key, AdState.SHOWING)
@@ -285,8 +238,12 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
             setAdState(key, AdState.LOADED)
             Log.d(TAG, "Ad loaded successfully for key: $key")
 
-            // Check if there's a pending show
-            pendingShows.remove(key)?.invoke()
+            // Check if there's a pending show for this instance
+            val runnable = pendingShowRunnable
+            if (runnable != null) {
+                pendingShowRunnable = null // Clear it
+                runnable.invoke()
+            }
         } else {
             // Loaded ad is not expected, destroy it
             destroyAd(ad)
@@ -302,7 +259,9 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     protected open fun onAdLoadFailed(key: String, message: String? = null) {
         Log.e(TAG, "Ad load failed for key: $key. Reason: ${message ?: "Unknown"}")
         setAdState(key, AdState.IDLE)
-        pendingShows.remove(key)
+
+        // Clear pending show since load failed
+        pendingShowRunnable = null
     }
 
     /**
@@ -346,6 +305,14 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
     }
 
     /**
+     * Called when an ad is clicked
+     * @param key Key of the clicked ad
+     */
+    protected open fun onAdClicked(key: String) {
+        Log.d(TAG, "Ad clicked for key: $key")
+    }
+
+    /**
      * Set the state of the ad for a given key
      * @param key Key to identify the ad
      * @param state New state
@@ -382,8 +349,8 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
         }
         adKey = null
 
-        // Clear all pending show callbacks for this view
-        pendingShows.clear()
+        // Clear pending show
+        pendingShowRunnable = null
     }
 
     /**
@@ -398,4 +365,3 @@ abstract class OzAds<AdType> : IOzAds, ViewGroup {
         }
     }
 }
-

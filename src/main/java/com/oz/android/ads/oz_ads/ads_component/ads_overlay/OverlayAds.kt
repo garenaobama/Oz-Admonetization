@@ -11,7 +11,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
 import com.oz.android.ads.R
 import com.oz.android.ads.oz_ads.ads_component.AdState
-import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.OzAds
 
 /**
@@ -109,20 +108,6 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
      */
     private fun isTimeGapSatisfiedInternal(): Boolean {
         return isTimeGapSatisfied()
-    }
-
-    /**
-     * Override isValidFormat to restrict to overlay formats
-     */
-    override fun isValidFormat(format: AdsFormat): Boolean {
-        return format == AdsFormat.INTERSTITIAL || format == AdsFormat.APP_OPEN
-    }
-
-    /**
-     * Override getValidFormats to return overlay formats
-     */
-    override fun getValidFormats(): List<AdsFormat> {
-        return listOf(AdsFormat.INTERSTITIAL, AdsFormat.APP_OPEN)
     }
 
     /**

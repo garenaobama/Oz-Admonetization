@@ -9,7 +9,6 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.LoadAdError
 import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
 import com.oz.android.ads.network.admobs.ads_component.app_open.AdmobAppOpen
-import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.ads_overlay.OverlayAds
 
 /**
@@ -37,11 +36,6 @@ open class OzAdmobOpenAd @JvmOverloads constructor(
     // Error callbacks for external error tracking
     var onLoadErrorCallback: ((String, String?) -> Unit)? = null
     var onShowErrorCallback: ((String, String?) -> Unit)? = null
-
-    init {
-        // Set format to APP_OPEN by default for this specific class
-        setAdsFormat(AdsFormat.APP_OPEN)
-    }
 
     /**
      * Set ad unit ID for a specific placement key.
@@ -126,6 +120,11 @@ open class OzAdmobOpenAd @JvmOverloads constructor(
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                 // Bridge to OzAds.onAdShowFailed() - handles state management
                 this@OzAdmobOpenAd.onAdShowFailed(key, adError.message)
+            }
+
+            override fun onAdClicked() {
+                // Bridge to OzAds.onAdClicked()
+                this@OzAdmobOpenAd.onAdClicked(key)
             }
         }
 

@@ -8,7 +8,6 @@ import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.LoadAdError
 import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
-import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.ads_inline.InlineAds
 
 /**
@@ -26,11 +25,6 @@ open class OzAdmobBannerAd @JvmOverloads constructor(
 
     companion object {
         private const val TAG = "OzAdmobBannerAd"
-    }
-
-    init {
-        // Set format to BANNER by default for this specific class
-        setAdsFormat(AdsFormat.BANNER)
     }
 
     /**
@@ -60,6 +54,11 @@ open class OzAdmobBannerAd @JvmOverloads constructor(
             override fun onAdFailedToLoad(error: LoadAdError) {
                 // Notify parent about the failure
                 this@OzAdmobBannerAd.onAdLoadFailed(key, error.message)
+            }
+
+            override fun onAdClicked() {
+                // Bridge to OzAds.onAdClicked()
+                this@OzAdmobBannerAd.onAdClicked(key)
             }
         }
 

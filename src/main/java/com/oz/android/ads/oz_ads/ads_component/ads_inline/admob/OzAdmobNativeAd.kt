@@ -10,7 +10,6 @@ import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAdView
 import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
 import com.oz.android.ads.network.admobs.ads_component.native_advanced.AdmobNativeAdvanced
-import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.ads_inline.InlineAds
 import java.util.concurrent.ConcurrentHashMap
 
@@ -33,10 +32,6 @@ open class OzAdmobNativeAd @JvmOverloads constructor(
 
     // Map key -> Layout ID
     private var layoutId = 0
-
-    init {
-        setAdsFormat(AdsFormat.NATIVE)
-    }
 
     /**
      * Set ad unit ID cho một key
@@ -90,6 +85,10 @@ open class OzAdmobNativeAd @JvmOverloads constructor(
 
             override fun onAdFailedToLoad(error: LoadAdError) {
                 this@OzAdmobNativeAd.onAdLoadFailed(key, error.message)
+            }
+
+            override fun onAdClicked() {
+                this@OzAdmobNativeAd.onAdClicked(key)
             }
         }
 

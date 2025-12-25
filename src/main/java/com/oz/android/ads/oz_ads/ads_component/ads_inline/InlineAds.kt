@@ -11,7 +11,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import com.oz.android.ads.R
 import com.oz.android.ads.oz_ads.OzAdsManager
-import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.OzAds
 import io.github.usefulness.shimmer.android.ShimmerFrameLayout
 
@@ -84,14 +83,6 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     override fun onAdShown(key: String) {
         super.onAdShown(key)
         stopShimmer()
-    }
-
-    override fun isValidFormat(format: AdsFormat): Boolean {
-        return format == AdsFormat.BANNER || format == AdsFormat.NATIVE
-    }
-
-    override fun getValidFormats(): List<AdsFormat> {
-        return listOf(AdsFormat.BANNER, AdsFormat.NATIVE)
     }
 
     /**

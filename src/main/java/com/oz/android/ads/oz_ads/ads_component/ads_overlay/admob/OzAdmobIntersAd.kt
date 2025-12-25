@@ -4,20 +4,23 @@ import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
+import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.LoadAdError
 import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
 import com.oz.android.ads.network.admobs.ads_component.interstitial.AdmobInterstitial
 import com.oz.android.ads.oz_ads.ads_component.AdsFormat
 import com.oz.android.ads.oz_ads.ads_component.ads_overlay.OverlayAds
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Implementation of OverlayAds for AdMob Interstitial ads.
  * This class only implements the abstract methods from OverlayAds/OzAds.
  * All business logic (state management, load/show flow) is handled by OzAds/OverlayAds.
+ *
+ * Update: Now holds a single AdUnitId and a single Activity reference.
  */
-class OzAdmobIntersAd @JvmOverloads constructor(
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+open class OzAdmobIntersAd @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
@@ -27,10 +30,10 @@ class OzAdmobIntersAd @JvmOverloads constructor(
         private const val TAG = "OzAdmobIntersAd"
     }
 
-    private val adUnitIds = ConcurrentHashMap<String, String>()
-    // Store activity per key for showing ads (interstitial requires Activity)
-    private val activities = ConcurrentHashMap<String, Activity>()
-    
+    // Single variables instead of Maps
+    private var currentAdUnitId: String? = null
+    private var currentActivity: Activity? = null
+
     // Error callbacks for external error tracking
     var onLoadErrorCallback: ((String, String?) -> Unit)? = null
     var onShowErrorCallback: ((String, String?) -> Unit)? = null
@@ -42,22 +45,22 @@ class OzAdmobIntersAd @JvmOverloads constructor(
 
     /**
      * Set ad unit ID for a specific placement key.
-     * @param key A unique key to identify this ad placement.
+     * @param key A unique key to identify this ad placement (passed to parent for state management).
      * @param adUnitId The AdMob ad unit ID for the interstitial ad.
      */
     fun setAdUnitId(key: String, adUnitId: String) {
         setPreloadKey(key)
-        adUnitIds[key] = adUnitId
+        this.currentAdUnitId = adUnitId
         Log.d(TAG, "Ad unit ID set for key: $key -> $adUnitId")
     }
 
     /**
      * Set activity for showing the ad.
-     * @param key The ad key
+     * @param key The ad key (used for logging context)
      * @param activity The activity context required to show the ad.
      */
     fun setActivity(key: String, activity: Activity) {
-        activities[key] = activity
+        this.currentActivity = activity
         Log.d(TAG, "Activity set for key: $key")
     }
 
@@ -86,11 +89,12 @@ class OzAdmobIntersAd @JvmOverloads constructor(
     }
 
     /**
-     * Create an AdmobInterstitial instance for the given key.
+     * Create an AdmobInterstitial instance.
      * Sets up listener to bridge callbacks from AdmobInterstitial to OzAds callbacks.
      */
     override fun createAd(key: String): AdmobInterstitial? {
-        val adUnitId = adUnitIds[key]
+        val adUnitId = currentAdUnitId
+
         if (adUnitId.isNullOrBlank()) {
             Log.e(TAG, "Ad unit ID is not set for key: $key")
             onAdLoadFailed(key, "Ad unit ID not set")
@@ -143,18 +147,15 @@ class OzAdmobIntersAd @JvmOverloads constructor(
      * Activity must be set via setActivity() before calling showAds().
      */
     override fun onShowAds(key: String, ad: AdmobInterstitial) {
-        val activity = activities[key]
+        val activity = currentActivity
         if (activity == null) {
             Log.e(TAG, "Cannot show interstitial ad for key '$key' because activity is null. Call setActivity() first.")
             onAdShowFailed(key, "Activity is null")
             return
         }
-        
+
         Log.d(TAG, "Showing interstitial ad for key: $key")
         ad.show(activity)
-        
-        // Note: We don't clear activity here because it might be needed for retry
-        // Activity will be cleared when ad is dismissed or destroyed
     }
 
     /**
@@ -163,9 +164,7 @@ class OzAdmobIntersAd @JvmOverloads constructor(
      */
     override fun destroyAd(ad: AdmobInterstitial) {
         Log.d(TAG, "Destroying interstitial ad")
-        // Interstitial ads are one-time use objects. The AdmobInterstitial class handles
-        // nullifying the ad reference after it's shown or fails to show.
-        // No explicit destroy call is necessary on the ad object itself.
+        // Interstitial ads are one-time use objects.
     }
 
     /**
@@ -173,7 +172,7 @@ class OzAdmobIntersAd @JvmOverloads constructor(
      */
     override fun onAdDismissed(key: String) {
         super.onAdDismissed(key)
-        activities.remove(key)
+        currentActivity = null
         Log.d(TAG, "Cleaned up activity reference for key: $key")
     }
 
@@ -190,16 +189,17 @@ class OzAdmobIntersAd @JvmOverloads constructor(
      */
     override fun onAdShowFailed(key: String, message: String?) {
         super.onAdShowFailed(key, message)
-        activities.remove(key)
+        currentActivity = null
         onShowErrorCallback?.invoke(key, message)
         Log.d(TAG, "Cleaned up activity reference for key: $key after show failed")
     }
 
     /**
-     * Override destroy to clean up all activities
+     * Override destroy to clean up
      */
     override fun destroy() {
-        activities.clear()
+        currentActivity = null
+        currentAdUnitId = null
         super.destroy()
     }
 

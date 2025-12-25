@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import android.view.ViewGroup
+import androidx.annotation.RestrictTo
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.oz.android.ads.oz_ads.OzAdsManager
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * Các implementation cụ thể (như AdmobInlineAds, AdmobOverlayAds) sẽ extend class này
  */
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 abstract class OzAds<AdType> : IOzAds, ViewGroup {
     @JvmOverloads
     constructor(

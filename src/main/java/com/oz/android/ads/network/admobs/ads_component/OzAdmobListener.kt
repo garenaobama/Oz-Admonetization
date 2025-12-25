@@ -1,6 +1,5 @@
 package com.oz.android.ads.network.admobs.ads_component
 
-import AdmobBanner
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.LoadAdError
 

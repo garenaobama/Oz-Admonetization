@@ -1,6 +1,7 @@
 import android.content.Context
 import android.util.Log
 import android.view.ViewGroup
+import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -13,6 +14,7 @@ import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
  * Class quản lý banner ads từ AdMob
  * Cung cấp 3 phương thức chính: load, show, và loadThenShow
  */
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 class AdmobBanner(
     context: Context,
     adUnitId: String,

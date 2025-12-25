@@ -3,6 +3,7 @@ package com.oz.android.ads.network.admobs.ads_component.interstitial
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -16,6 +17,7 @@ import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
  * Class quản lý interstitial ads từ AdMob
  * Cung cấp 3 phương thức chính: load, show, và loadThenShow
  */
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 class AdmobInterstitial(
     context: Context,
     adUnitId: String,

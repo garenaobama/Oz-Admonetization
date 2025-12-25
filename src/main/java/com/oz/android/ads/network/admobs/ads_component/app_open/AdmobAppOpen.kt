@@ -3,6 +3,7 @@ package com.oz.android.ads.network.admobs.ads_component.app_open
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -17,6 +18,7 @@ import java.util.Date
  * Class quản lý App Open ads từ AdMob
  * Cung cấp 3 phương thức chính: load, show, và loadThenShow
  */
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 class AdmobAppOpen(
     context: Context,
     adUnitId: String,

@@ -4,6 +4,7 @@ import AdmobBanner
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
+import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.LoadAdError
 import com.oz.android.ads.network.admobs.ads_component.OzAdmobListener
@@ -14,7 +15,8 @@ import com.oz.android.ads.oz_ads.ads_component.ads_inline.InlineAds
  * Implementation cụ thể của InlineAds cho AdMob Banner
  * Chỉ xử lý BANNER format
  */
-class OzAdmobBannerAd @JvmOverloads constructor(
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+open class OzAdmobBannerAd @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0

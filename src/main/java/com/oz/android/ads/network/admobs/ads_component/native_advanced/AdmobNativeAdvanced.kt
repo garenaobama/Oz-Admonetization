@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import android.view.ViewGroup
+import androidx.annotation.RestrictTo
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
  * Class quản lý native advanced ads từ AdMob
  * Cung cấp 3 phương thức chính: load, show, và loadThenShow
  */
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 class AdmobNativeAdvanced(
     context: Context,
     adUnitId: String,

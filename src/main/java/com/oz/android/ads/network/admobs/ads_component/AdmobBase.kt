@@ -1,10 +1,12 @@
 package com.oz.android.ads.network.admobs.ads_component
 
 import android.content.Context
+import androidx.annotation.RestrictTo
 
 /**
  * @param AdType The type of the Ad Object (AdView, InterstitialAd, NativeAd, etc.)
  */
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 abstract class AdmobBase<AdType>(
     val context: Context,
     var adUnitId: String,

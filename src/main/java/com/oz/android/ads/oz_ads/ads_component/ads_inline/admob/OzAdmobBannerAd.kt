@@ -6,11 +6,9 @@ import android.util.AttributeSet
 import android.util.Log
 import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.LoadAdError
-import com.oz.android.ads.network.admobs.ads_component.interstitial.AdmobInterstitial
-import com.oz.android.wrapper.OzAdListener
+import com.oz.android.ads.utils.listener.OzAdListener
 import com.oz.android.ads.oz_ads.ads_component.ads_inline.InlineAds
-import com.oz.android.wrapper.OzAdError
+import com.oz.android.ads.utils.listener.OzAdError
 
 /**
  * Implementation cụ thể của InlineAds cho AdMob Banner

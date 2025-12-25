@@ -1,18 +1,16 @@
 package com.oz.android.ads.oz_ads.ads_component.ads_inline.admob
 
-import AdmobBanner
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
 import androidx.annotation.RestrictTo
-import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAdView
-import com.oz.android.wrapper.OzAdListener
+import com.oz.android.ads.utils.listener.OzAdListener
 import com.oz.android.ads.network.admobs.ads_component.native_advanced.AdmobNativeAdvanced
 import com.oz.android.ads.oz_ads.ads_component.ads_inline.InlineAds
-import com.oz.android.wrapper.OzAdError
+import com.oz.android.ads.utils.listener.OzAdError
 import java.util.concurrent.ConcurrentHashMap
 
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)

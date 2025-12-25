@@ -6,8 +6,8 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.ResponseInfo
 import com.oz.android.ads.utils.event.OzEventLogger
-import com.oz.android.wrapper.OzAdError
-import com.oz.android.wrapper.OzAdListener
+import com.oz.android.ads.utils.listener.OzAdError
+import com.oz.android.ads.utils.listener.OzAdListener
 
 /**
  * @param AdType The type of the Ad Object (AdView, InterstitialAd, NativeAd, etc.)

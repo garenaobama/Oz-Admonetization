@@ -8,13 +8,11 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
 import com.oz.android.ads.network.admobs.ads_component.toOzError
-import com.oz.android.ads.utils.event.OzEventLogger
-import com.oz.android.wrapper.OzAdListener
+import com.oz.android.ads.utils.listener.OzAdListener
 
 /**
  * Class quản lý interstitial ads từ AdMob

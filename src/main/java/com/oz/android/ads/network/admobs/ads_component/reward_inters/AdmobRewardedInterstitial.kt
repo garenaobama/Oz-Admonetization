@@ -12,7 +12,7 @@ import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
-import com.oz.android.wrapper.OzAdListener
+import com.oz.android.ads.utils.listener.OzAdListener
 
 /**
  * Class quản lý rewarded interstitial ads từ AdMob

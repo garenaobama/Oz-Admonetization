@@ -5,12 +5,10 @@ import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import androidx.annotation.RestrictTo
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.LoadAdError
-import com.oz.android.wrapper.OzAdListener
+import com.oz.android.ads.utils.listener.OzAdListener
 import com.oz.android.ads.network.admobs.ads_component.interstitial.AdmobInterstitial
 import com.oz.android.ads.oz_ads.ads_component.ads_overlay.OverlayAds
-import com.oz.android.wrapper.OzAdError
+import com.oz.android.ads.utils.listener.OzAdError
 
 /**
  * Implementation of OverlayAds for AdMob Interstitial ads.

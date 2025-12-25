@@ -1,7 +1,6 @@
 package com.oz.android.ads.network.admobs.ads_component.native_advanced
 
 import android.content.Context
-import android.os.Build
 import android.util.Log
 import android.view.ViewGroup
 import androidx.annotation.RestrictTo
@@ -16,7 +15,7 @@ import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
 import com.oz.android.ads.network.admobs.ads_component.toOzError
-import com.oz.android.wrapper.OzAdListener
+import com.oz.android.ads.utils.listener.OzAdListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

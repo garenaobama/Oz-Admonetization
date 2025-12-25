@@ -12,6 +12,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
 import com.oz.android.ads.network.admobs.ads_component.toOzError
+import com.oz.android.ads.utils.listener.OzAdError
 import com.oz.android.ads.utils.listener.OzAdListener
 
 /**
@@ -76,8 +77,9 @@ class AdmobInterstitial(
                     isLoaded = false
                     adIsLoading = false
                     pendingActivity = null
-                    
+
                     listener?.onAdFailedToLoad(adError.toOzError())
+                    listener?.onNextAction()
                 }
             }
         )
@@ -148,6 +150,7 @@ class AdmobInterstitial(
                 interstitialAd = null
                 isLoaded = false
                 listener?.onAdDismissedFullScreenContent()
+                listener?.onNextAction()
             }
 
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
@@ -158,6 +161,7 @@ class AdmobInterstitial(
                 interstitialAd = null
                 isLoaded = false
                 listener?.onAdFailedToShowFullScreenContent(adError.toOzError())
+                listener?.onNextAction()
             }
 
             override fun onAdShowedFullScreenContent() {

@@ -84,6 +84,7 @@ class AdmobAppOpen(
                     pendingActivity = null
 
                     listener?.onAdFailedToLoad(adError.toOzError())
+                    listener?.onNextAction()
                 }
             }
         )
@@ -184,6 +185,7 @@ class AdmobAppOpen(
                 isLoaded = false
                 isShowingAd = false
                 listener?.onAdDismissedFullScreenContent()
+                listener?.onNextAction()
             }
 
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
@@ -194,6 +196,7 @@ class AdmobAppOpen(
                 isLoaded = false
                 isShowingAd = false
                 listener?.onAdFailedToShowFullScreenContent(adError.toOzError())
+                listener?.onNextAction()
             }
 
             override fun onAdShowedFullScreenContent() {

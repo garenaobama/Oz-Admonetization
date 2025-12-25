@@ -13,11 +13,14 @@ import androidx.annotation.RestrictTo
 import com.oz.android.ads.R
 import com.oz.android.ads.oz_ads.AdState
 import com.oz.android.ads.oz_ads.OzAds
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Abstract class for managing fullscreen overlay ads (Interstitial, App Open)
  * Extends OzAds to inherit basic ad management capabilities
- * Implements logic for time gaps between ad displays
+ * Implements logic for time gaps between ad displays.
+ *
+ * UPDATE: The time gap logic is now Global per Ad Category (Class Type).
  */
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 abstract class OverlayAds<AdType> @JvmOverloads constructor(
@@ -28,13 +31,18 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
 
     companion object {
         private const val TAG = "AdsOverlayManager"
-        private const val DEFAULT_TIME_GAP = 25000L // 25 seconds
+        private const val DEFAULT_TIME_GAP = 30000L // 30 seconds
+
+        /**
+         * Global storage for the last closed time.
+         * Key: The Ad Category String (usually the class name).
+         * Value: Timestamp in milliseconds.
+         * Using ConcurrentHashMap to handle potential access from different threads safely.
+         */
+        private val globalLastAdClosedTimes = ConcurrentHashMap<String, Long>()
     }
 
-    // Time when the last ad was closed
-    private var lastAdClosedTime: Long = 0
-
-    // Configurable time gap between ads
+    // Configurable time gap between ads (Per instance configuration)
     private var timeGap: Long = DEFAULT_TIME_GAP
 
     // Loading indicator view (for ViewGroup display)
@@ -44,16 +52,39 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
     private var loadingDialog: Dialog? = null
 
     init {
-        // Initialize lastAdClosedTime to allow first ad to show immediately
-        lastAdClosedTime = 0
         setupLoadingIndicator()
     }
 
     /**
-     * Setup loading indicator layout
-     * Similar to how InlineAds sets up shimmer
-     * Can be displayed as ViewGroup child or as Dialog overlay
+     * Determines the category for this ad instance to group cooldowns.
+     * By default, it returns the Class Name of the implementation.
+     *
+     * Example:
+     * If you have class `InterstitialAds : OverlayAds`, the key is "InterstitialAds".
+     * All instances of `InterstitialAds` will share the same timer.
+     *
+     * You can override this if you want to group different classes together.
      */
+    protected open fun getAdCategory(): String {
+        return this::class.java.name
+    }
+
+    /**
+     * Helper to get the last closed time for the current category
+     */
+    private fun getLastClosedTimeGlobal(): Long {
+        return globalLastAdClosedTimes[getAdCategory()] ?: 0L
+    }
+
+    /**
+     * Helper to update the last closed time for the current category
+     */
+    private fun updateLastClosedTimeGlobal() {
+        val now = System.currentTimeMillis()
+        globalLastAdClosedTimes[getAdCategory()] = now
+        Log.d(TAG, "Updated global cooldown for [${getAdCategory()}]: $now")
+    }
+
     private fun setupLoadingIndicator() {
         val loadingResId = R.layout.layout_overlay_loading
         if (loadingResId != 0) {
@@ -79,7 +110,7 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
             return
         }
         timeGap = timeMillis
-        Log.d(TAG, "Time gap set to: $timeMillis ms")
+        Log.d(TAG, "Time gap set to: $timeMillis ms for instance of ${getAdCategory()}")
     }
 
     /**
@@ -93,7 +124,12 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
      */
     fun getRemainingCooldownTime(): Long {
         val currentTime = System.currentTimeMillis()
-        val timeSinceLastAd = currentTime - lastAdClosedTime
+        val lastClosed = getLastClosedTimeGlobal()
+        val timeSinceLastAd = currentTime - lastClosed
+
+        // If lastClosed is 0, it means never shown, so remaining is 0
+        if (lastClosed == 0L) return 0L
+
         val remaining = timeGap - timeSinceLastAd
         return if (remaining > 0) remaining else 0
     }
@@ -106,57 +142,41 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
     }
 
     /**
-     * Internal method to check time gap (used by showAds)
-     */
-    private fun isTimeGapSatisfiedInternal(): Boolean {
-        return isTimeGapSatisfied()
-    }
-
-    /**
      * Override showAds to enforce time gap logic
      */
     override fun showAds(key: String) {
-        if (!isTimeGapSatisfiedInternal()) {
-            Log.d(TAG, "Skipping showAds for key: $key due to time gap restriction")
-            // Optionally, we could notify failure here, but skipping is often desired behavior for frequency capping
-            onAdShowFailed(key, "Time gap not satisfied")
+        if (!isTimeGapSatisfied()) {
+            val remaining = getRemainingCooldownTime()
+            val category = getAdCategory()
+            Log.d(TAG, "Skipping showAds ($category) for key: $key. Cooldown active. Remaining: ${remaining}ms")
+
+            onAdShowFailed(key, "Time gap not satisfied. Wait ${remaining}ms")
             return
         }
         super.showAds(key)
     }
 
     /**
-     * Override onAdDismissed to update the last closed time
+     * Override onAdDismissed to update the last closed time globally for this type
      */
     override fun onAdDismissed(key: String) {
         super.onAdDismissed(key)
-        lastAdClosedTime = System.currentTimeMillis()
-        Log.d(TAG, "Ad dismissed for key: $key. Updated lastAdClosedTime to: $lastAdClosedTime")
+        updateLastClosedTimeGlobal()
+        Log.d(TAG, "Ad dismissed for key: $key. Global timer updated for ${getAdCategory()}")
     }
 
-    /**
-     * Since Overlay ads are not ViewGroups that display content directly,
-     * hideAds implementation might be empty or specific to clearing internal states.
-     * For full-screen ads, "hiding" usually means they are dismissed, which is handled by the SDK.
-     */
     override fun hideAds() {
-        Log.d(
-            TAG,
-            "hideAds called - no-op for Overlay ads as they manage their own visibility via SDK"
-        )
+        Log.d(TAG, "hideAds called - no-op for Overlay ads")
     }
 
     /**
      * Show loading indicator
-     * If parent is Activity, show as dialog overlay. Otherwise show as ViewGroup child.
      */
     fun showLoading() {
-        // Try to show as dialog overlay first (for overlay ads not in layout)
         val activity = context as? Activity
         if (activity != null && !isAttachedToWindow) {
             showLoadingDialog(activity)
         } else {
-            // Show as ViewGroup child (for when OverlayAds is in layout)
             loadingIndicator?.visibility = View.VISIBLE
         }
         Log.d(TAG, "Loading indicator shown")
@@ -166,47 +186,29 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
      * Hide loading indicator
      */
     fun hideLoading() {
-        // Hide dialog if showing
         loadingDialog?.dismiss()
         loadingDialog = null
-
-        // Hide ViewGroup child if showing
         loadingIndicator?.visibility = View.GONE
         Log.d(TAG, "Loading indicator hidden")
     }
 
-    /**
-     * Show loading indicator as dialog overlay
-     */
     private fun showLoadingDialog(activity: Activity) {
         if (loadingDialog != null && loadingDialog!!.isShowing) {
-            return // Already showing
+            return
         }
 
         val loadingResId = R.layout.layout_overlay_loading
-        if (loadingResId == 0) {
-            return
-        }
+        if (loadingResId == 0) return
 
         try {
             val dialog = Dialog(activity, android.R.style.Theme_Translucent_NoTitleBar)
             val view = LayoutInflater.from(activity).inflate(loadingResId, null)
             dialog.setContentView(view)
 
-            // Make dialog fullscreen and non-cancelable
             dialog.window?.let { window ->
-                window.setLayout(
-                    WindowManager.LayoutParams.MATCH_PARENT,
-                    WindowManager.LayoutParams.MATCH_PARENT
-                )
-                window.setFlags(
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                )
-                window.setFlags(
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
-                )
+                window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+                window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                window.setFlags(WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH)
             }
 
             dialog.setCancelable(false)
@@ -222,11 +224,9 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
         if (adKey == null) return
         when (getAdState(adKey!!)) {
             AdState.IDLE -> {
-                if (!loadInBackground)
-                    showLoading()
+                if (!loadInBackground) showLoading()
                 super.loadAd()
             }
-
             else -> super.loadAd()
         }
     }
@@ -236,33 +236,21 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
         super.loadThenShow()
     }
 
-    /**
-     * Override onAdLoaded to hide loading indicator
-     */
     override fun onAdLoaded(key: String, ad: AdType) {
         super.onAdLoaded(key, ad)
         hideLoading()
     }
 
-    /**
-     * Override onAdLoadFailed to hide loading indicator
-     */
     override fun onAdLoadFailed(key: String, message: String?) {
         super.onAdLoadFailed(key, message)
         hideLoading()
     }
 
-    /**
-     * Override onAdShown to hide loading indicator
-     */
     override fun onAdShown(key: String) {
         super.onAdShown(key)
         hideLoading()
     }
 
-    /**
-     * Override destroy to cleanup loading dialog
-     */
     override fun destroy() {
         hideLoading()
         super.destroy()

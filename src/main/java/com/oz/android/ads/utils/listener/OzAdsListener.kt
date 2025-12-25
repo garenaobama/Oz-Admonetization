@@ -22,6 +22,9 @@ abstract class OzAdListener<AdType> {
     open fun onAdClicked() {}
     open fun onAdImpression() {}
 
+    //special callback for overlays, that call beside onfailed, on dissmiss, on granted
+    open fun onNextAction() {}
+
     // Fullscreen content callbacks (for Interstitial, Rewarded, App Open ads)
     open fun onAdShowedFullScreenContent() {}
     open fun onAdDismissedFullScreenContent() {}
@@ -74,6 +77,11 @@ abstract class OzAdListener<AdType> {
             override fun onAdFailedToShowFullScreenContent(error: OzAdError) {
                 first.onAdFailedToShowFullScreenContent(error)
                 second.onAdFailedToShowFullScreenContent(error)
+            }
+
+            override fun onNextAction() {
+                first.onNextAction()
+                second.onNextAction()
             }
         }
     }

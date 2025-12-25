@@ -32,6 +32,8 @@ class OzAdsManager private constructor(
     // Ad store (key -> ad object)
     private val adStore = ConcurrentHashMap<String, Any>()
 
+    var timeOGapverlayAds:Long = 30000L
+
     fun setEnableAd(shouldShow: Boolean) {
         _enableAd.value = shouldShow
     }
@@ -123,5 +125,9 @@ class OzAdsManager private constructor(
             continuation.resume(OzAdsResult.Success(Unit))
             onSuccess?.invoke()
         }
+    }
+
+    fun isAdInitialized(): Boolean {
+        return initialized
     }
 }

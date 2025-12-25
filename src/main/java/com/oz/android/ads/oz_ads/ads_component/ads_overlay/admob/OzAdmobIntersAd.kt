@@ -32,10 +32,6 @@ open class OzAdmobIntersAd @JvmOverloads constructor(
     private var currentAdUnitId: String? = null
     private var currentActivity: Activity? = null
 
-    // Error callbacks for external error tracking
-    var onLoadErrorCallback: ((String, String?) -> Unit)? = null
-    var onShowErrorCallback: ((String, String?) -> Unit)? = null
-
     /**
      * Set ad unit ID for a specific placement key.
      * @param key A unique key to identify this ad placement (passed to parent for state management).
@@ -181,7 +177,7 @@ open class OzAdmobIntersAd @JvmOverloads constructor(
      */
     override fun onAdLoadFailed(key: String, message: String?) {
         super.onAdLoadFailed(key, message)
-        onLoadErrorCallback?.invoke(key, message)
+        listener?.onNextAction()
     }
 
     /**
@@ -190,7 +186,7 @@ open class OzAdmobIntersAd @JvmOverloads constructor(
     override fun onAdShowFailed(key: String, message: String?) {
         super.onAdShowFailed(key, message)
         currentActivity = null
-        onShowErrorCallback?.invoke(key, message)
+        listener?.onNextAction()
         Log.d(TAG, "Cleaned up activity reference for key: $key after show failed")
     }
 

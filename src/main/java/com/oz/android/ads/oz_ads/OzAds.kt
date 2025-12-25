@@ -292,7 +292,6 @@ abstract class OzAds<AdType> : ViewGroup {
      */
     protected open fun onAdShowFailed(key: String, message: String? = null) {
         if (adKey != key) return
-
         Log.e(TAG, "Ad show failed for key: $key. Reason: ${message ?: "Unknown"}")
         setAdState(key, AdState.IDLE)
     }
@@ -350,7 +349,7 @@ abstract class OzAds<AdType> : ViewGroup {
         super.onAttachedToWindow()
         findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
             OzAdsManager.getInstance().enableAd.collect { shouldShow ->
-                if (!shouldShow) {
+                if (!shouldShow && OzAdsManager.getInstance().isAdInitialized()) {
                     hideAds()
                 }
             }

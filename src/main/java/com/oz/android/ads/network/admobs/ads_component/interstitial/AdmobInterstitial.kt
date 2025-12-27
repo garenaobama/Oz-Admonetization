@@ -112,6 +112,7 @@ class AdmobInterstitial(
         }
 
         // Show the ad
+        listener?.onNextAction()
         currentAd.show(activity)
         Log.d(TAG, "Interstitial ad displayed")
     }
@@ -150,7 +151,6 @@ class AdmobInterstitial(
                 interstitialAd = null
                 isLoaded = false
                 listener?.onAdDismissedFullScreenContent()
-                listener?.onNextAction()
             }
 
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
@@ -161,7 +161,6 @@ class AdmobInterstitial(
                 interstitialAd = null
                 isLoaded = false
                 listener?.onAdFailedToShowFullScreenContent(adError.toOzError())
-                listener?.onNextAction()
             }
 
             override fun onAdShowedFullScreenContent() {

@@ -38,6 +38,39 @@ open class OzAdmobBannerAd @JvmOverloads constructor(
         Log.d(TAG, "Ad unit ID set for key: $key -> $adUnitId")
     }
 
+    /**
+     * Enable collapsible banner
+     * @param position "top" or "bottom" for collapse button position
+     */
+    fun setCollapsible(position: String) {
+        banner.setCollapsible(position)
+        Log.d(TAG, "Collapsible banner enabled at: $position")
+    }
+
+    /**
+     * Enable collapsible banner at top
+     */
+    fun setCollapsibleTop() {
+        banner.setCollapsibleTop()
+        Log.d(TAG, "Collapsible banner enabled at top")
+    }
+
+    /**
+     * Enable collapsible banner at bottom
+     */
+    fun setCollapsibleBottom() {
+        banner.setCollapsibleBottom()
+        Log.d(TAG, "Collapsible banner enabled at bottom")
+    }
+
+    /**
+     * Disable collapsible banner
+     */
+    fun disableCollapsible() {
+        banner.setCollapsible(null)
+        Log.d(TAG, "Collapsible banner disabled")
+    }
+
     override fun createAd(key: String): AdmobBanner? {
         val adUnitId = banner.adUnitId
         if (adUnitId.isBlank()) {
@@ -69,18 +102,50 @@ open class OzAdmobBannerAd @JvmOverloads constructor(
 
     override fun onLoadAd(key: String, ad: AdmobBanner) {
         Log.d(TAG, "Loading banner ad for key: $key")
-        ad.load()
+        // Pass this ViewGroup as container so AdmobBanner can calculate size from actual layout dimensions
+        ad.load(this)
     }
 
     override fun setShimmerSize(key: String) {
-        // Calculate the height of the adaptive banner (assuming 360 width as per AdmobBanner implementation)
-        // If we could access the specific width used in AdmobBanner, that would be better, but 360 is common standard
-        val adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, 360)
+        // Wait for the view to be measured before setting shimmer size
+        if (width == 0 || height == 0) {
+            post {
+                setShimmerSizeInternal()
+            }
+        } else {
+            setShimmerSizeInternal()
+        }
+    }
+
+    /**
+     * Set shimmer size based on actual layout dimensions
+     * Uses the same ad size calculation as the actual banner ad
+     */
+    private fun setShimmerSizeInternal() {
+        if (width == 0) {
+            Log.w(TAG, "Layout not measured yet, skipping shimmer size")
+            return
+        }
+
+        val density = context.resources.displayMetrics.density
+        val widthDp = (width / density).toInt()
+        
+        Log.d(TAG, "Setting shimmer size from container: ${width}px (${widthDp}dp)")
+        
+        // Use the same logic as AdmobBanner.calculateAdSize()
+        // Use anchored adaptive banner - it automatically determines the best height
+        val adSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp)
         val heightPx = adSize.getHeightInPixels(context)
         
-        shimmerLayout?.let { layout ->
-            layout.layoutParams.height = heightPx
-            layout.requestLayout()
+        // Set shimmer height to match the ad size
+        if (heightPx > 0) {
+            shimmerLayout?.let { layout ->
+                layout.layoutParams.height = heightPx
+                layout.requestLayout()
+            }
+            Log.d(TAG, "Shimmer size set to: width=${width}px, height=${heightPx}px (AdSize: ${adSize.width}dp x ${adSize.height}dp)")
+        } else {
+            Log.e(TAG, "Failed to calculate valid shimmer height")
         }
     }
 

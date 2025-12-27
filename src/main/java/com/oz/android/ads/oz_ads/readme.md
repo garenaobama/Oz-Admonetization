@@ -44,9 +44,41 @@ These classes provide the concrete implementation for a specific ad format and n
 *   It extends `InlineAds<AdmobBanner>` (or similar).
 *   It implements the abstract methods to:
     *   **Create**: Instantiate the network-specific ad object and attach listeners.
-    *   **Load**: Trigger the ad load on the network object.
+    *   **Load**: Trigger the ad load on the network object, passing the container for dynamic size calculation.
     *   **Show**: Display the ad view within the `InlineAds` container.
     *   **Destroy**: Clean up the network object.
+
+#### Dynamic Ad Sizing
+
+Banner ads automatically calculate their size based on the actual layout dimensions:
+*   The ad size is calculated using `AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, adWidth)`
+*   `adWidth` is derived from the actual measured width of the layout container
+*   The height is automatically determined by AdMob to maximize performance while fitting the container
+*   Size calculation occurs **after** the view is fully laid out on screen to ensure accurate dimensions
+*   This works with any layout parameters like `match_parent`, `wrap_content`, or specific dp values
+*   **Shimmer Placeholder**: The loading shimmer automatically matches the calculated ad size for a seamless loading experience
+*   The banner will properly fit within your container's dimensions
+
+#### Collapsible Banners
+
+Collapsible banners provide a better user experience by allowing users to collapse the ad:
+*   **User Control**: Users can tap a collapse button to minimize the ad, reducing intrusiveness
+*   **Better UX**: Gives users control over their viewing experience while still showing ads
+*   **AdMob Feature**: This is an official AdMob feature for standard banner ads
+
+**How to Enable:**
+```kotlin
+// Enable collapsible banner with collapse button at top
+bannerAd.setCollapsibleTop()
+
+// Or enable with collapse button at bottom
+bannerAd.setCollapsibleBottom()
+
+// To disable collapsible feature
+bannerAd.disableCollapsible()
+```
+
+**Note**: Collapsible banners must be enabled **before** calling `loadAd()`. If you change the setting after loading, you need to refresh the ad for changes to take effect.
 
 ```kotlin
 // Example: OzAdmobBannerAd
@@ -108,6 +140,11 @@ class OzAdmobBannerAd(context: Context) : InlineAds<AdmobBanner>(context) {
     
     // Optional: Set refresh time (default is 30s)
     bannerAd.setRefreshTime(60_000L)
+    
+    // Optional: Enable collapsible banner (adds a collapse button for users)
+    bannerAd.setCollapsibleTop()     // Collapse button at top
+    // or
+    bannerAd.setCollapsibleBottom()  // Collapse button at bottom
     
     // The ad will automatically load and show based on view lifecycle
     // You can also manually load if needed, but it's usually automatic.

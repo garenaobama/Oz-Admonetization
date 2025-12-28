@@ -33,6 +33,10 @@ class OzAdsManager private constructor(
     private val _enableAd = MutableStateFlow(_config.isAdEnabled)
     val enableAd = _enableAd.asStateFlow()
 
+    // Fullscreen ad state (overlay ads like interstitial, app open)
+    private val _isFullScreenAdShowing = MutableStateFlow(false)
+    val isFullScreenAdShowing = _isFullScreenAdShowing.asStateFlow()
+
     // Ads state management (key -> state)
     private val adStates = ConcurrentHashMap<String, AdState>()
 
@@ -77,6 +81,26 @@ class OzAdsManager private constructor(
      */
     fun setEnableAd(shouldShow: Boolean) {
         updateConfig { copy(isAdEnabled = shouldShow) }
+    }
+
+    // ----------------------------------------------------------------
+    // Fullscreen Ad State Methods
+    // ----------------------------------------------------------------
+
+    /**
+     * Called when a fullscreen ad (overlay) starts showing.
+     * Updates the reactive state that can be observed by the app.
+     */
+    fun onAdsFullScreenShowing() {
+        _isFullScreenAdShowing.value = true
+    }
+
+    /**
+     * Called when a fullscreen ad (overlay) is dismissed.
+     * Updates the reactive state that can be observed by the app.
+     */
+    fun onAdsFullScreenDismissed() {
+        _isFullScreenAdShowing.value = false
     }
 
     // ----------------------------------------------------------------

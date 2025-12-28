@@ -13,6 +13,7 @@ import androidx.annotation.RestrictTo
 import com.oz.android.ads.R
 import com.oz.android.utils.enums.AdState
 import com.oz.android.ads.oz_ads.OzAds
+import com.oz.android.wrapper.OzAdsManager
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -162,6 +163,7 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
     override fun onAdDismissed(key: String) {
         super.onAdDismissed(key)
         updateLastClosedTimeGlobal()
+        OzAdsManager.getInstance().onAdsFullScreenDismissed()
         Log.d(TAG, "Ad dismissed for key: $key. Global timer updated for ${getAdCategory()}")
     }
 
@@ -249,6 +251,7 @@ abstract class OverlayAds<AdType> @JvmOverloads constructor(
     override fun onAdShown(key: String) {
         super.onAdShown(key)
         hideLoading()
+        OzAdsManager.getInstance().onAdsFullScreenShowing()
     }
 
     override fun destroy() {

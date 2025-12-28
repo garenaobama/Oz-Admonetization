@@ -4,13 +4,15 @@ import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAdView
-import com.oz.android.ads.utils.listener.OzAdListener
+import com.oz.android.utils.listener.OzAdListener
 import com.oz.android.ads.network.admobs.ads_component.native_advanced.AdmobNativeAdvanced
 import com.oz.android.ads.oz_ads.ads_component.ads_inline.InlineAds
-import com.oz.android.ads.utils.listener.OzAdError
+import com.oz.android.utils.listener.OzAdError
+import com.oz.android.wrapper.OzAdsManager
 import java.util.concurrent.ConcurrentHashMap
 
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
@@ -105,32 +107,35 @@ open class OzAdmobNativeAd @JvmOverloads constructor(
     override fun setShimmerSize(key: String) {
         var heightPx = 0
         val nativeAdView = nativeAdViews[key]
-        
+
         if (nativeAdView != null && nativeAdView.layoutParams != null && nativeAdView.layoutParams.height > 0) {
-             heightPx = nativeAdView.layoutParams.height
+            heightPx = nativeAdView.layoutParams.height
         } else {
-             val resId = layoutId
-             if (resId != 0) {
-                 try {
-                     // Inflate a dummy view to check height
-                     val view = LayoutInflater.from(context).inflate(resId, null)
-                     // If the root view has a fixed height, use it
-                     if (view.layoutParams != null && view.layoutParams.height > 0) {
-                          heightPx = view.layoutParams.height
-                     } else {
-                          // Measure the view to get an estimated height
-                          val displayMetrics = context.resources.displayMetrics
-                          val widthSpec = MeasureSpec.makeMeasureSpec(displayMetrics.widthPixels, MeasureSpec.AT_MOST)
-                          val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-                          view.measure(widthSpec, heightSpec)
-                          heightPx = view.measuredHeight
-                     }
-                 } catch (e: Exception) {
-                     Log.e(TAG, "Failed to inflate layout for shimmer size: ${e.message}")
-                 }
-             }
+            val resId = layoutId
+            if (resId != 0) {
+                try {
+                    // Inflate a dummy view to check height
+                    val view = LayoutInflater.from(context).inflate(resId, null)
+                    // If the root view has a fixed height, use it
+                    if (view.layoutParams != null && view.layoutParams.height > 0) {
+                        heightPx = view.layoutParams.height
+                    } else {
+                        // Measure the view to get an estimated height
+                        val displayMetrics = context.resources.displayMetrics
+                        val widthSpec = MeasureSpec.makeMeasureSpec(
+                            displayMetrics.widthPixels,
+                            MeasureSpec.AT_MOST
+                        )
+                        val heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+                        view.measure(widthSpec, heightSpec)
+                        heightPx = view.measuredHeight
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to inflate layout for shimmer size: ${e.message}")
+                }
+            }
         }
-        
+
         if (heightPx > 0) {
             shimmerLayout?.let { layout ->
                 layout.layoutParams.height = heightPx
@@ -141,7 +146,7 @@ open class OzAdmobNativeAd @JvmOverloads constructor(
 
     override fun onShowAds(key: String, ad: AdmobNativeAdvanced) {
         var nativeAdView = nativeAdViews[key]
-        
+
         // Nếu chưa có NativeAdView, kiểm tra xem có layoutId không
         if (nativeAdView == null) {
             val resId = layoutId
@@ -184,40 +189,46 @@ open class OzAdmobNativeAd @JvmOverloads constructor(
     private fun bindStandardViews(nativeAdView: NativeAdView) {
         // Map các ID từ layout XML vào properties của NativeAdView
         // Sử dụng identifier string để tìm ID resource
-        
+
         // Headline
         findIdAndSet(nativeAdView, "ad_headline") { view -> nativeAdView.headlineView = view }
-        
+
         // Body
         findIdAndSet(nativeAdView, "ad_body") { view -> nativeAdView.bodyView = view }
-        
+
         // Call To Action
-        findIdAndSet(nativeAdView, "ad_call_to_action") { view -> nativeAdView.callToActionView = view }
-        
+        findIdAndSet(nativeAdView, "ad_call_to_action") { view ->
+            nativeAdView.callToActionView = view
+        }
+
         // App Icon
         findIdAndSet(nativeAdView, "ad_app_icon") { view -> nativeAdView.iconView = view }
-        
+
         // Price
         findIdAndSet(nativeAdView, "ad_price") { view -> nativeAdView.priceView = view }
-        
+
         // Star Rating (ad_stars in XML)
         findIdAndSet(nativeAdView, "ad_stars") { view -> nativeAdView.starRatingView = view }
-        
+
         // Store
         findIdAndSet(nativeAdView, "ad_store") { view -> nativeAdView.storeView = view }
-        
+
         // Advertiser
         findIdAndSet(nativeAdView, "ad_advertiser") { view -> nativeAdView.advertiserView = view }
-        
+
         // Media View
-        findIdAndSet(nativeAdView, "ad_media") { view -> 
+        findIdAndSet(nativeAdView, "ad_media") { view ->
             if (view is MediaView) {
                 nativeAdView.mediaView = view
             }
         }
     }
 
-    private fun findIdAndSet(root: NativeAdView, idName: String, setter: (android.view.View) -> Unit) {
+    private fun findIdAndSet(
+        root: NativeAdView,
+        idName: String,
+        setter: (android.view.View) -> Unit
+    ) {
         val packageName = context.packageName
         val resId = context.resources.getIdentifier(idName, "id", packageName)
         if (resId != 0) {
@@ -241,10 +252,14 @@ open class OzAdmobNativeAd @JvmOverloads constructor(
     override fun onPauseAd() {
         // Native ads generally don't need explicit pause handling
         Log.d(TAG, "Pausing native ads (no-op)")
+        if (OzAdsManager.getInstance().config.offAdsOnPause) {
+            visibility = INVISIBLE
+        }
     }
 
     override fun onResumeAd() {
         // Native ads generally don't need explicit resume handling
         Log.d(TAG, "Resuming native ads (no-op)")
+        visibility = VISIBLE
     }
 }

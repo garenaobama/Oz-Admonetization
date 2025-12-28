@@ -1,4 +1,4 @@
-package com.oz.android.ads.oz_ads
+package com.oz.android.utils.enums
 
 /**
  * Enum định nghĩa các state của ad
@@ -9,6 +9,3 @@ enum class AdState {
     LOADED,    // Ad đã load thành công, sẵn sàng để show
     SHOWING    // Ad đang được hiển thị
 }
-
-
-

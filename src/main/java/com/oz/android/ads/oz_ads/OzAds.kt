@@ -7,7 +7,8 @@ import android.view.ViewGroup
 import androidx.annotation.RestrictTo
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import com.oz.android.ads.utils.listener.OzAdListener
+import com.oz.android.utils.enums.AdState
+import com.oz.android.utils.listener.OzAdListener
 import com.oz.android.wrapper.OzAdsManager
 import kotlinx.coroutines.launch
 

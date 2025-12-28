@@ -1,4 +1,4 @@
-package com.oz.android.ads.oz_ads
+package com.oz.android.utils.listener
 
 /**
  * A sealed class that represents the result of an operation.

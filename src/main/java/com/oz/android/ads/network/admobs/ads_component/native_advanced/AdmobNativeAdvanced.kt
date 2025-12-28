@@ -15,7 +15,7 @@ import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
 import com.oz.android.ads.network.admobs.ads_component.toOzError
-import com.oz.android.ads.utils.listener.OzAdListener
+import com.oz.android.utils.listener.OzAdListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

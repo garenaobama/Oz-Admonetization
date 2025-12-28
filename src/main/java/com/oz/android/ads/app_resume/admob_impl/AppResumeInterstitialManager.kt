@@ -1,12 +1,12 @@
-package com.oz.android.ads.utils.app_resume.admob_impl
+package com.oz.android.ads.app_resume.admob_impl
 
 import android.app.Activity
 import android.content.Context
 import android.util.Log
 import com.oz.android.ads.network.admobs.ads_component.interstitial.AdmobInterstitial
-import com.oz.android.ads.utils.app_resume.AppLifecycleAdManager
-import com.oz.android.ads.utils.listener.OzAdError
-import com.oz.android.ads.utils.listener.OzAdListener
+import com.oz.android.ads.app_resume.AppLifecycleAdManager
+import com.oz.android.utils.listener.OzAdError
+import com.oz.android.utils.listener.OzAdListener
 import com.oz.android.wrapper.OzAdmobIntersAd
 
 /**

@@ -1,4 +1,4 @@
-package com.oz.android.ads.utils.app_resume
+package com.oz.android.ads.app_resume
 
 import android.app.Activity
 import android.app.Application
@@ -176,9 +176,17 @@ abstract class AppLifecycleAdManager<T : Any> : Application.ActivityLifecycleCal
         }
     }
 
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-    override fun onActivityPaused(activity: Activity) {}
-    override fun onActivityStopped(activity: Activity) {}
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        Log.d(TAG, "onActivityCreated: ${activity.javaClass.simpleName}")
+    }
+    override fun onActivityPaused(activity: Activity) {
+        Log.d(TAG, "onActivityPaused: ${activity.javaClass.simpleName}")
+    }
+    override fun onActivityStopped(activity: Activity) {
+        Log.d(TAG, "onActivityStopped: ${activity.javaClass.simpleName}")
+    }
+    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
+        Log.d(TAG, "onActivitySaveInstanceState: ${activity.javaClass.simpleName}")
+    }
     // </editor-fold>
 }

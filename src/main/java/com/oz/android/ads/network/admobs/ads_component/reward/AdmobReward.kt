@@ -12,7 +12,7 @@ import com.google.android.gms.ads.OnUserEarnedRewardListener
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
-import com.oz.android.ads.utils.listener.OzAdListener
+import com.oz.android.utils.listener.OzAdListener
 
 /**
  * Class quản lý rewarded video ads từ AdMob

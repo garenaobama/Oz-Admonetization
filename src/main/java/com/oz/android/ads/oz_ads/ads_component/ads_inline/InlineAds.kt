@@ -14,6 +14,7 @@ import com.oz.android.ads.R
 import com.oz.android.wrapper.OzAdsManager
 import com.oz.android.ads.oz_ads.OzAds
 import io.github.usefulness.shimmer.android.ShimmerFrameLayout
+import androidx.core.view.isVisible
 
 /**
  * Abstract class để quản lý inline ads (banner, native) hiển thị cùng với content
@@ -55,9 +56,6 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     // Auto refresh handler
     private val refreshHandler = Handler(Looper.getMainLooper())
     private var refreshRunnable: Runnable? = null
-
-    // Ad visibility state
-    private var isAdVisible = false
 
     //shimmer
     protected var shimmerLayout: ShimmerFrameLayout? = null
@@ -114,7 +112,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         refreshTime = timeInMillis
         // Only restart if we are already visible and loaded
         adKey?.let { key ->
-            if(isAdVisible && isAdLoaded(key)) {
+            if(isVisible && isAdLoaded(key)) {
                 scheduleNextRefresh()
             }
         }
@@ -135,7 +133,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     override fun onAdLoaded(key: String, ad: AdType) {
         super.onAdLoaded(key, ad)
 
-        if (isAdVisible) {
+        if (isVisible) {
             // FIX: Show the ad immediately when it loads!
             showAds(key)
 
@@ -154,7 +152,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         super.onAdLoadFailed(key, message)
         stopShimmer()
 
-        if (isAdVisible) {
+        if (isVisible) {
             // If failed, wait for the refresh time then try again
             scheduleNextRefresh()
         }
@@ -169,7 +167,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
         if (refreshTime <= 0) return
 
         refreshRunnable = Runnable {
-            if (isAdVisible) {
+            if (isVisible) {
                 refreshAd()
             }
         }
@@ -201,7 +199,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      * Pause ad (gọi trong onPause của Activity/Fragment)
      */
     fun pause() {
-        isAdVisible = false
+        isVisible = false
         cancelAutoRefresh()
         onPauseAd()
     }
@@ -210,7 +208,7 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      * Resume ad (gọi trong onResume của Activity/Fragment)
      */
     fun resume() {
-        isAdVisible = true
+        isVisible = true
         adKey?.let { key ->
             if (isAdEnable()) {
                 if (isAdLoaded(key)) {
@@ -243,11 +241,11 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
      */
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
-        val newVisibility = visibility == View.VISIBLE
-        if (isAdVisible == newVisibility) return
-        isAdVisible = newVisibility
+        val newVisibility = visibility == VISIBLE
+        if (isVisible == newVisibility) return
+        isVisible = newVisibility
 
-        if (isAdVisible) {
+        if (isVisible) {
             resume()
         } else {
             pause()
@@ -313,12 +311,12 @@ abstract class InlineAds<AdType> @JvmOverloads constructor(
     }
 
     fun startShimmer(){
-        shimmerLayout?.visibility = View.VISIBLE
+        shimmerLayout?.visibility = VISIBLE
         shimmerLayout?.startShimmer()
     }
 
     fun stopShimmer(){
         shimmerLayout?.stopShimmer()
-        shimmerLayout?.visibility = View.GONE
+        shimmerLayout?.visibility = GONE
     }
 }

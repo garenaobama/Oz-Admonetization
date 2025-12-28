@@ -1,4 +1,4 @@
-package com.oz.android.ads.utils.listener
+package com.oz.android.utils.listener
 
 // No imports from com.google.android.gms.ads.*
 

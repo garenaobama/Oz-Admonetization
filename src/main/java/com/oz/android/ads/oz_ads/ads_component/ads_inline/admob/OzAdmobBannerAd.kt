@@ -1,14 +1,20 @@
 package com.oz.android.ads.oz_ads.ads_component.ads_inline.admob
 
 import AdmobBanner
+import android.app.Activity
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import androidx.annotation.RestrictTo
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.AdSize
-import com.oz.android.ads.utils.listener.OzAdListener
+import com.oz.android.utils.listener.OzAdListener
 import com.oz.android.ads.oz_ads.ads_component.ads_inline.InlineAds
-import com.oz.android.ads.utils.listener.OzAdError
+import com.oz.android.utils.listener.OzAdError
+import com.oz.android.wrapper.OzAdsManager
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Implementation cụ thể của InlineAds cho AdMob Banner
@@ -170,10 +176,14 @@ open class OzAdmobBannerAd @JvmOverloads constructor(
 
     override fun onPauseAd() {
         Log.d(TAG, "Pausing all banner ads")
+        if (OzAdsManager.getInstance().config.offAdsOnPause) {
+            visibility = INVISIBLE
+        }
     }
 
     override fun onResumeAd() {
         Log.d(TAG, "Resuming all banner ads")
+        visibility = VISIBLE
     }
 }
 

@@ -1,4 +1,4 @@
-package com.oz.android.ads.utils.event
+package com.oz.android.utils.event
 
 import android.content.Context
 import android.os.Bundle

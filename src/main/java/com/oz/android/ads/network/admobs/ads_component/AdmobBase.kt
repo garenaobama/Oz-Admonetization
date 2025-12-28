@@ -5,9 +5,9 @@ import androidx.annotation.RestrictTo
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.ResponseInfo
-import com.oz.android.ads.utils.event.OzEventLogger
-import com.oz.android.ads.utils.listener.OzAdError
-import com.oz.android.ads.utils.listener.OzAdListener
+import com.oz.android.utils.event.OzEventLogger
+import com.oz.android.utils.listener.OzAdError
+import com.oz.android.utils.listener.OzAdListener
 
 /**
  * @param AdType The type of the Ad Object (AdView, InterstitialAd, NativeAd, etc.)

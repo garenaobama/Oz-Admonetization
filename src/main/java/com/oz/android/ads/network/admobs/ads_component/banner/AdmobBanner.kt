@@ -1,9 +1,7 @@
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.util.Log
-import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RestrictTo
 import androidx.window.layout.WindowMetricsCalculator
@@ -15,7 +13,7 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.ads.mediation.admob.AdMobAdapter
 import com.oz.android.ads.network.admobs.ads_component.AdmobBase
 import com.oz.android.ads.network.admobs.ads_component.toOzError
-import com.oz.android.ads.utils.listener.OzAdListener
+import com.oz.android.utils.listener.OzAdListener
 
 /**
  * Class quản lý banner ads từ AdMob
